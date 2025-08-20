@@ -24,7 +24,7 @@ public class HitServiceImpl implements HitService {
 
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        if (!uris.isEmpty()) {
+        if (uris != null) {
             if (unique) {
             return hitRepository.findUniqueStatsByUrisAndTimestampBetween(uris, start, end);
 
