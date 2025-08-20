@@ -35,9 +35,8 @@ services:
       retries: 3
 
   ewm-service:
-    build:
-      context: ./ewm-service
-      dockerfile: Dockerfile
+    image: alpine:latest
+    command: sleep infinity
     ports:
       - "8080:8080"
 
