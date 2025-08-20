@@ -34,22 +34,22 @@ services:
       timeout: 10s
       retries: 3
 
-#  ewm-service:
-#    ports:
-#      - "8080:8080"
-#
-#  ewm-db:
-#    image: postgres:16.1
-#    container_name: postgres
-#    ports:
-#      - "6541:5432"
-#    environment:
-#      - TZ=Europe/Moscow
-#      - POSTGRES_PASSWORD=ewmdb
-#       - POSTGRES_USER=ewmdb
-#      - POSTGRES_DB=ewmdb
-#    healthcheck:
-#        test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
-#        timeout: 5s
-#        interval: 5s
-#        retries: 10
+  ewm-service:
+    ports:
+      - "8080:8080"
+
+  ewm-db:
+    image: postgres:16.1
+    container_name: postgres-ewm-db
+    ports:
+      - "5432:5432"
+    environment:
+      - TZ=Europe/Moscow
+      - POSTGRES_PASSWORD=ewmdb
+       - POSTGRES_USER=ewmdb
+      - POSTGRES_DB=ewmdb
+    healthcheck:
+        test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+        timeout: 5s
+        interval: 5s
+        retries: 10
