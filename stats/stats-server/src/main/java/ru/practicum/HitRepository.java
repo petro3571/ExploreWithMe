@@ -12,7 +12,7 @@ public interface HitRepository extends JpaRepository<Hit, Integer> {
     @Query(value = "SELECT NEW ru.practicum.ViewStatsDto(h.app, h.uri, COUNT(h.ip)) " +
             "FROM Hit as h " +
             "WHERE h.uri IN :uris " +
-            "AND h.timestamp BETWEEN :start AND :end "+
+            "AND h.timestamp BETWEEN :start AND :end " +
             "GROUP BY h.app, h.uri")
     List<ViewStatsDto> findByUriInAndTimestampBetween(
             @Param("uris") List<String> uris,
@@ -31,7 +31,7 @@ public interface HitRepository extends JpaRepository<Hit, Integer> {
 
     @Query(value = "SELECT NEW ru.practicum.ViewStatsDto(h.app, h.uri, COUNT(h.ip)) " +
             "FROM Hit as h " +
-            "WHERE h.timestamp BETWEEN :start AND :end "+
+            "WHERE h.timestamp BETWEEN :start AND :end " +
             "GROUP BY h.app, h.uri")
     List<ViewStatsDto> findByTimestampBetween(
             @Param("start") LocalDateTime start,

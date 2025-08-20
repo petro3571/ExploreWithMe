@@ -78,7 +78,8 @@ class StatsControllerTest {
         when(hitService.getStats(any(), any(), anyList(), anyBoolean()))
                 .thenReturn(List.of(dto));
 
-        mvc.perform(get("/stats?start="+LocalDateTime.now().minusYears(1)+"&end="+LocalDateTime.now().plusYears(1)+"&uris=test/1&unique=false")
+        mvc.perform(get("/stats?start=" + LocalDateTime.now().minusYears(1) +"&end=" + LocalDateTime.now().plusYears(1)
+                        + "&uris=test/1&unique=false")
                         .characterEncoding(StandardCharsets.UTF_8)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
