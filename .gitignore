@@ -20,3 +20,10 @@ target/
 *.iws
 *.iml
 *.ipr
+
+*.db
+.db/
+db/**.jar
+*.class
+*.DS_Store
+.DS_Store

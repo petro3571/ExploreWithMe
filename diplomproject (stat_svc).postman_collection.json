@@ -1,0 +1,109 @@
+{
+	"info": {
+		"_postman_id": "1a2568c5-8432-4617-b231-1588cee32cc3",
+		"name": "diplomproject (stat_svc)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45894097"
+	},
+	"item": [
+		{
+			"name": "Добавление нового пользователя",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function() {",
+							"    pm.response.to.be.ok; // код ответа должен быть равен 200 OK",
+							"    pm.response.to.be.withBody; // ответ должен содержать тело",
+							"    pm.response.to.be.json; // и тело ответа должно быть в формате JSON",
+							"}); "
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"app\": \"testapp\",\n    \"uri\": \"test/uri\",\n    \"ip\": \"255.255.255.0\",\n    \"timestamp\": \"2025-08-19 00:00:01\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:9090/hit",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"hit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const body = pm.response.json(); // получаем тело ответа в формате JSON",
+							"pm.expect(body).is.an('array'); // проверяем, что тело ответа является массивом"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "localhost:9090/stats?start=2025-08-17%2000:00:00&end=2025-08-20%2000:00:00&uris=test/uri&unique=false",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"stats"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "2025-08-17%2000:00:00"
+						},
+						{
+							"key": "end",
+							"value": "2025-08-20%2000:00:00"
+						},
+						{
+							"key": "uris",
+							"value": "test/uri"
+						},
+						{
+							"key": "unique",
+							"value": "false"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
