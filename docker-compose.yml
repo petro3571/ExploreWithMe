@@ -35,6 +35,9 @@ services:
       retries: 3
 
   ewm-service:
+    build:
+      context: ./ewm-service
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
 
