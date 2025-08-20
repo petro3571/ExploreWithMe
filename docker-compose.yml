@@ -15,10 +15,10 @@ services:
         interval: 5s
         retries: 10
 
-  stats-service:
+  stats-server:
     build: stats/stats-server
     image: stats/stats-server:1.0.0
-    container_name: stats
+    container_name: stats-server
     depends_on:
       stats-db:
         condition: service_healthy
