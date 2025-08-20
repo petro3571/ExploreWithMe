@@ -16,9 +16,9 @@ services:
         retries: 10
 
   stats-service:
-    build: stats-service/stats-service-server
-    image: stats-service/stats-service-server:1.0.0
-    container_name: stats-service
+    build: stats/stats-server
+    image: stats/stats-server:1.0.0
+    container_name: stats
     depends_on:
       stats-db:
         condition: service_healthy
