@@ -13,7 +13,8 @@ public interface HitRepository extends JpaRepository<Hit, Integer> {
             "FROM Hit as h " +
             "WHERE h.uri IN :uris " +
             "AND h.timestamp BETWEEN :start AND :end " +
-            "GROUP BY h.app, h.uri")
+            "GROUP BY h.app, h.uri " +
+            "ORDER BY COUNT(h.ip) DESC")
     List<ViewStatsDto> findByUriInAndTimestampBetween(
             @Param("uris") List<String> uris,
             @Param("start") LocalDateTime start,
