@@ -1,13 +1,17 @@
 package ru.practicum;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
 @Table(name = "hits")
+@Getter
+@Setter
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
 public class Hit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,4 +29,16 @@ public class Hit {
 
     @Column(name = "timestamp")
     private LocalDateTime timestamp;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Hit)) return false;
+        return id != null && id.equals(((Hit) o).getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

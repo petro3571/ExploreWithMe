@@ -11,11 +11,11 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class HitServiceImpl implements HitService {
     private final HitRepository hitRepository;
 
     @Override
-    @Transactional
     public HitDto postHit(HitDto hitDto) {
         Hit hit = HitMapper.mapToHit(hitDto);
         hitRepository.save(hit);
@@ -23,6 +23,7 @@ public class HitServiceImpl implements HitService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         if (uris != null) {
             if (unique) {
