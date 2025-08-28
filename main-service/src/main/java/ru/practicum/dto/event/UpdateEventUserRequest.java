@@ -1,0 +1,29 @@
+package ru.practicum.dto.event;
+
+import lombok.Data;
+import ru.practicum.dto.category.CategoryDto;
+import ru.practicum.dto.enums.StateAction;
+
+import java.time.LocalDateTime;
+
+@Data
+public class UpdateEventUserRequest {
+    private String annotation;
+
+    private Long categoryId;
+
+    private String description;
+
+    private LocalDateTime eventDate;
+
+    //    private Location location;
+    private boolean paid;
+
+    private Integer participantLimit;
+
+    private boolean requestModeration;
+
+    private String title;
+
+    private StateAction stateAction ;
+}
