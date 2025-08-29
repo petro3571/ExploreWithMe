@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class UpdateEventUserRequest {
     private String annotation;
 
-    private Long categoryId;
+    private Long category;
 
     private String description;
 

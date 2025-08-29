@@ -106,16 +106,16 @@ public class EventServiceImpl implements EventService {
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest request) {
         Optional<User> findUser = findUserMethod(userId);
 
-        Optional<Category> category = categoryRepository.findById(request.getCategoryId());
-        if (category.isEmpty()) {
-            throw new NotFoundUserException("Категории с id " + request.getCategoryId() + "нет.");
-        }
-
         Optional<Event> event = eventRepository.findByIdAndInitiator_Id(eventId, userId);
 
         if (event.isPresent() && !event.get().getState().equals(State.PUBLISHED) && event.get().getEventDate()
                 .minusHours(2).isAfter(LocalDateTime.now())) {
             Event findEventAndUpdate = EventMapper.mapToEventFromUpdateEvent(event.get(), request);
+
+            Optional<Category> category = categoryRepository.findById(findEventAndUpdate.getCategory().getId());
+            if (category.isEmpty()) {
+                throw new NotFoundUserException("Категории с id " + request.getCategory() + "нет.");
+            }
             findEventAndUpdate.setCategory(category.get());
             return EventMapper.mapToFullEventDtoFormEvent(eventRepository.save(findEventAndUpdate));
         } else {
