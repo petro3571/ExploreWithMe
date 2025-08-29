@@ -28,14 +28,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 //                                        @Param("start") LocalDateTime rangeStart,
 //                                        @Param("end") LocalDateTime rangeEnd,@Param("categoryIds") List<Long> categoryIds, @Param("states") List<String> states, Pageable pageable);
 
-//    @Query(value = "SELECT e " +
-//            "FROM Event as e " +
-//            "WHERE e.initiator_id IN :userIds AND e.id > :from AND (e.event_date BETWEEN :start AND :end) AND e.category_id IN :categoryIds AND e.state IN :states LIMIT :size"
-//            )
-//    List<Event> findByParam(@Param("userIds") List<Long> userIds,
-//                                        @Param("start") LocalDateTime rangeStart,
-//                                        @Param("end") LocalDateTime rangeEnd,@Param("categoryIds") List<Long> categoryIds, @Param("states") List<String> states,@Param("from") int from,@Param("size") int size);
-
     @Query(value = "SELECT e.* FROM events e " +
             "WHERE (:userIds IS NULL OR e.initiator_id IN :userIds) " +
             "AND e.id > :from " +
