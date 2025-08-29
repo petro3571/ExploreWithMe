@@ -18,11 +18,11 @@
  CREATE TABLE IF NOT EXISTS events (
            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
            title VARCHAR(64),
-           annotation VARCHAR(127),
+           annotation VARCHAR(5000),
            category_id INTEGER REFERENCES categories ON DELETE CASCADE,
            confirmed_requests INT,
            created_on TIMESTAMP WITHOUT TIME ZONE,
-           description VARCHAR(255),
+           description VARCHAR(7000),
            location_id INTEGER REFERENCES locations ON DELETE CASCADE,
            event_date TIMESTAMP WITHOUT TIME ZONE,
            initiator_id INTEGER REFERENCES users ON DELETE CASCADE,

@@ -44,7 +44,7 @@ public class PublicEventController {
         hitDto.setApp("main-service");
         hitDto.setIp(request.getRemoteAddr());
         hitDto.setUri(request.getRequestURI());
-        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER)));
+        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
         statsClient.postHit(hitDto);
         return result;
     }
@@ -56,7 +56,7 @@ public class PublicEventController {
         hitDto.setApp("main-service");
         hitDto.setIp(request.getRemoteAddr());
         hitDto.setUri(request.getRequestURI());
-        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER)));
+        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
         statsClient.postHit(hitDto);
         return result;
     }

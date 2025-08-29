@@ -1,8 +1,9 @@
 package ru.practicum.dto.event;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import ru.practicum.dto.enums.State;
-import ru.practicum.dto.location.LocationDto;
+import ru.practicum.entity.Location;
 
 import java.time.LocalDateTime;
 
@@ -10,13 +11,14 @@ import java.time.LocalDateTime;
 public class NewEventRequest {
     private String annotation;
 
-    private Long categoryId;
+    private Long category;
 
     private String description;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
-    private LocationDto location;
+    private Location location;
 
     private boolean paid;
 

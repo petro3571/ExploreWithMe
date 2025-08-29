@@ -22,6 +22,11 @@ public class Location {
     @JoinColumn(name = "lon")
     private float lon;
 
+    public Location(float lat, float lon) {
+        this.lat = lat;
+        this.lon = lon;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -38,9 +38,9 @@ public class EventServiceImpl implements EventService {
     public EventFullDto addEvent(NewEventRequest request, Long userId) {
         Optional<User> findUser = findUserMethod(userId);
 
-        Optional<Category> category = categoryRepository.findById(request.getCategoryId());
+        Optional<Category> category = categoryRepository.findById(request.getCategory());
         if (category.isEmpty()) {
-            throw new NotFoundUserException("Категории с id " + request.getCategoryId() + "нет.");
+            throw new NotFoundUserException("Категории с id " + request.getCategory() + "нет.");
         }
 
         Event event = EventMapper.mapToEventFromNewRequest(request);
