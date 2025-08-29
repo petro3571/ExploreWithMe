@@ -183,6 +183,10 @@ public class EventMapper {
             event.setState(State.PUBLISHED);
         }
 
+        if (request.getStateAction().equals(StateAction.REJECT_EVENT)) {
+            event.setState(State.CANCELED);
+        }
+
         if (request.getLocation() != null) {
             if (request.getLocation().getLat() != 0 && request.getLocation().getLon() != 0) {
                 Location location = new Location();

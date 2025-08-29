@@ -1,5 +1,6 @@
 package ru.practicum.dto.event;
 
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import ru.practicum.dto.enums.StateAction;
 import ru.practicum.entity.Location;
@@ -20,6 +21,7 @@ public class UpdateEventUserRequest {
 
     private boolean paid;
 
+    @PositiveOrZero
     private Integer participantLimit;
 
     private boolean requestModeration;

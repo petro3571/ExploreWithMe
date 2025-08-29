@@ -335,7 +335,7 @@ public class EventServiceImpl implements EventService {
         if (findEvent.get().getState().equals(State.PUBLISHED)) {
             return EventMapper.mapToFullEventDtoFormEvent(findEvent.get());
         } else {
-            throw new BadRequestException("Событие не опубликовано.");
+            throw new NotFoundUserException("Событие не опубликовано.");
         }
     }
 
