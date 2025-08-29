@@ -393,7 +393,7 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundUserException("Заявки с id " + userId + "нет.");
         }
 
-        if (findRequest.get().getRequester().equals(findUser)) {
+        if (findRequest.get().getRequester().equals(findUser.get())) {
             findRequest.get().setStatus(RequestStatus.REJECTED);
             return RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(findRequest.get()));
         } else {
