@@ -269,11 +269,12 @@ public class EventServiceImpl implements EventService {
                             requestsPage.getTotalElements()
                     );
                 } else {
-                    return new PageImpl<>(
-                            Collections.emptyList(),
-                            requestsPage.getPageable(),
-                            requestsPage.getTotalElements()
-                    );
+//                    return new PageImpl<>(
+//                            Collections.emptyList(),
+//                            requestsPage.getPageable(),
+//                            requestsPage.getTotalElements()
+//                    );
+                    throw new BadRequestException("по заданным фильтрам не найдено ни одного события");
                 }
             } else {
                 Page<Event> requestsPage = eventRepository.findByDescriptionContainingIgnoreCaseOrAnnotationContainingIgnoreCaseAndCategory_IdInAndPaidAndEventDateBetweenAndConfirmedRequestsLessThan(text, categoryIds, paid, rangeStart, rangeEnd, pageable);
