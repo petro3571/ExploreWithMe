@@ -130,11 +130,13 @@ public class EventMapper {
             event.setState(State.PENDING);
         }
 
-        if (request.getLocation().getLat() != 0 && request.getLocation().getLon() != 0) {
-            Location location = new Location();
-            location.setLat(request.getLocation().getLat());
-            location.setLon(request.getLocation().getLon());
-            event.setLocation(location);
+        if (request.getLocation() != null) {
+            if (request.getLocation().getLat() != 0 && request.getLocation().getLon() != 0) {
+                Location location = new Location();
+                location.setLat(request.getLocation().getLat());
+                location.setLon(request.getLocation().getLon());
+                event.setLocation(location);
+            }
         }
 
         return event;
@@ -177,11 +179,17 @@ public class EventMapper {
             event.setState(State.PENDING);
         }
 
-        if (request.getLocation().getLat() != 0 && request.getLocation().getLon() != 0) {
-            Location location = new Location();
-            location.setLat(request.getLocation().getLat());
-            location.setLon(request.getLocation().getLon());
-            event.setLocation(location);
+        if (request.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
+            event.setState(State.PUBLISHED);
+        }
+
+        if (request.getLocation() != null) {
+            if (request.getLocation().getLat() != 0 && request.getLocation().getLon() != 0) {
+                Location location = new Location();
+                location.setLat(request.getLocation().getLat());
+                location.setLon(request.getLocation().getLon());
+                event.setLocation(location);
+            }
         }
 
         return event;

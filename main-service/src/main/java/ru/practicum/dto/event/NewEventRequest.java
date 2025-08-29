@@ -1,6 +1,7 @@
 package ru.practicum.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import ru.practicum.dto.enums.State;
 import ru.practicum.entity.Location;
@@ -13,6 +14,7 @@ public class NewEventRequest {
 
     private Long category;
 
+    @NotBlank
     private String description;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

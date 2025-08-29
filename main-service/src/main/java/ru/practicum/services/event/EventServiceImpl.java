@@ -53,8 +53,7 @@ public class EventServiceImpl implements EventService {
         Location location = new Location();
         location.setLon(request.getLocation().getLon());
         location.setLat(request.getLocation().getLat());
-        location = locationRepository.save(location);
-        event.setLocation(location);
+        event.setLocation(locationRepository.save(location));
         event.setCreatedOn(LocalDateTime.now());
 
         return EventMapper.mapToFullEventDtoFormEvent(eventRepository.save(event));
@@ -218,6 +217,9 @@ public class EventServiceImpl implements EventService {
         }
 
         Event event = EventMapper.mapToEventFromUpdateEventAdmin(findEvent.get(), request);
+        if (request.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
+            event.setPublishedOn(LocalDateTime.now());
+        }
         if (event.getEventDate().isAfter(event.getPublishedOn().plusHours(1))) {
             return EventMapper.mapToFullEventDtoFormEvent(eventRepository.save(event));
         } else {
@@ -275,7 +277,6 @@ public class EventServiceImpl implements EventService {
                         );
                     }
                 }
-
             case "views":
                 Pageable pageable1 = PageRequest.of(from, size, Sort.by("views"));
                 if (rangeStart == null && rangeEnd == null) {
@@ -321,7 +322,8 @@ public class EventServiceImpl implements EventService {
                         );
                     }
                 }
-            default: throw new BadRequestException("Incorrectly made request.");
+            default:
+                throw new BadRequestException("Incorrectly made request.");
         }
     }
 
