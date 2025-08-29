@@ -1,6 +1,7 @@
 package ru.practicum.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -27,11 +28,14 @@ public class NewEventRequest {
 
     private LocationDto location;
 
+    @JsonProperty(defaultValue = "false")
     private boolean paid;
 
     @PositiveOrZero
+    @JsonProperty(defaultValue = "0")
     private Integer participantLimit;
 
+    @JsonProperty(defaultValue = "true")
     private boolean requestModeration;
 
     @NotBlank

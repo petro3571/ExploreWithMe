@@ -1,7 +1,7 @@
  CREATE TABLE IF NOT EXISTS users (
           id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-          name VARCHAR(127),
-          email VARCHAR(255)
+          name VARCHAR(250),
+          email VARCHAR(254)
         );
 
  CREATE TABLE IF NOT EXISTS categories (

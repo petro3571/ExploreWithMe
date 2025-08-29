@@ -1,7 +1,6 @@
 package ru.practicum.services.event;
 
 import org.springframework.data.domain.Page;
-import ru.practicum.dto.enums.RuleSort;
 import ru.practicum.dto.event.*;
 import ru.practicum.dto.participationRequest.EventRequestStatusUpdateRequest;
 import ru.practicum.dto.participationRequest.EventRequestStatusUpdateResul;
@@ -39,7 +38,7 @@ public interface EventService {
                                     LocalDateTime rangeStart,
                                     LocalDateTime rangeEnd,
                                     boolean onlyAvailable,
-                                    RuleSort sort,
+                                    String sort,
                                     int from,
                                     int size
     );

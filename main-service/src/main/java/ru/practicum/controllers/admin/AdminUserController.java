@@ -3,6 +3,7 @@ package ru.practicum.controllers.admin;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.user.NewUserRequest;
@@ -18,6 +19,7 @@ public class AdminUserController {
     private final UserService service;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public UserDto registerUser(@Valid @RequestBody NewUserRequest request) {
         return service.registerUser(request);
     }
