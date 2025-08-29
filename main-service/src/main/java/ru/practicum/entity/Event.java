@@ -1,6 +1,7 @@
 package ru.practicum.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,7 +20,8 @@ public class Event {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "annotation")
+    @Column(name = "annotation", length = 2000)
+    @Size(min = 20, max = 2000, message = "Annotation must be between 20 and 2000 characters")
     private String annotation;
 
     @ManyToOne
@@ -32,7 +34,8 @@ public class Event {
     @Column(name = "created_on")
     private LocalDateTime createdOn;
 
-    @Column(name = "description")
+    @Column(name = "description", length = 7000)
+    @Size(min = 20, max = 7000, message = "Description must be between 20 and 7000 characters")
     private String description;
 
     @Column(name = "event_date")
@@ -62,7 +65,8 @@ public class Event {
     @Column(name = "state")
     private State state;
 
-    @Column(name = "title")
+    @Column(name = "title", length = 120)
+    @Size(min = 3, max = 120, message = "Title must be between 3 and 120 characters")
     private String title;
 
     @Column(name = "views")

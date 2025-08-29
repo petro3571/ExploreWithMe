@@ -25,16 +25,16 @@ public class AdminEventsController {
     private final StatsClient statsClient;
 
     @GetMapping
-    public Page<EventFullDto> getEvents_2(@RequestParam(required = false) List<Long> userIds,
+    public Page<EventFullDto> getEvents_2(@RequestParam(required = false) List<Long> users,
                                           @RequestParam(required = false) List<String> states,
-                                          @RequestParam(required = false) List<Long> categoryIds,
+                                          @RequestParam(required = false) List<Long> categories,
                                           @RequestParam(required = false)
                                           @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
                                           @RequestParam(required = false)
                                           @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
                                           @RequestParam(defaultValue = "0") int from,
                                           @RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
-        Page<EventFullDto> result = service.getEvents_2(userIds, states, categoryIds, rangeStart, rangeEnd, from, size);
+        Page<EventFullDto> result = service.getEvents_2(users, states, categories, rangeStart, rangeEnd, from, size);
         HitDto hitDto = new HitDto();
         hitDto.setApp("main-service");
         hitDto.setIp(request.getRemoteAddr());

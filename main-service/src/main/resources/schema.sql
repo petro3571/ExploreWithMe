@@ -18,7 +18,7 @@
  CREATE TABLE IF NOT EXISTS events (
            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
            title VARCHAR(64),
-           annotation VARCHAR(5000),
+           annotation VARCHAR(2000),
            category_id INTEGER REFERENCES categories ON DELETE CASCADE,
            confirmed_requests INT,
            created_on TIMESTAMP WITHOUT TIME ZONE,
@@ -30,7 +30,7 @@
            participant_limit INT,
            published_on TIMESTAMP WITHOUT TIME ZONE,
            request_moderation BOOLEAN,
-           state VARCHAR(50),
+           state VARCHAR(120),
            views INT
          );
  CREATE TABLE IF NOT EXISTS compilations (

@@ -26,7 +26,7 @@ public class PublicEventController {
 
     @GetMapping
     public Page<EventShortDto> getEvents_1(@RequestParam(required = false) String text,
-                                           @RequestParam(required = false) List<Long> categoryIds,
+                                           @RequestParam(required = false) List<Long> categories,
                                            @RequestParam(required = false) boolean paid,
                                            @RequestParam(required = false)
                                               @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
@@ -37,7 +37,7 @@ public class PublicEventController {
                                           @RequestParam(defaultValue = "0") int from,
                                            @RequestParam(defaultValue = "10") int size, HttpServletRequest request
                                           ) {
-        Page<EventShortDto> result = service.getEvents_1(text, categoryIds, paid, rangeStart, rangeEnd, onlyAvailable,
+        Page<EventShortDto> result = service.getEvents_1(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
                 sort, from, size);
 
         HitDto hitDto = new HitDto();

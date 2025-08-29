@@ -98,7 +98,7 @@ public class EventServiceImpl implements EventService {
         if (findEvent.isPresent()) {
             return EventMapper.mapToFullEventDtoFormEvent(findEvent.get());
         } else {
-            throw new NotFoundUserException("События которое Вы ищите нет.");
+            throw new NotFoundUserException("Событие которое Вы ищите нет.");
         }
     }
 

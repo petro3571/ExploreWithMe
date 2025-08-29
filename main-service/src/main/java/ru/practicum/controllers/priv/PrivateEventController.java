@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.HitDto;
@@ -34,6 +35,7 @@ public class PrivateEventController {
     private static final String APP_NAME = "ewm-main-service";
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto addEvent(@Valid @RequestBody NewEventRequest request,
                                  @PathVariable(name = "userId") Long userId) {
         return service.addEvent(request, userId);
