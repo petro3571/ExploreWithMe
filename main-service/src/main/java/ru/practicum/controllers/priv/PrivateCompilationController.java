@@ -19,15 +19,15 @@ public class PrivateCompilationController {
         return service.getUserRequests(userId);
     }
 
-    @PostMapping("/{eventId}")
+    @PostMapping
     public ParticipationRequestDto addParticipationRequest(@PathVariable(name = "userId") Long userId,
-                                                           @PathVariable(name = "eventId") Long eventId) {
+                                                           @RequestParam(name = "eventId") Long eventId) {
         return service.addParticipationRequest(userId, eventId);
     }
 
     @DeleteMapping("/{requestId}/cancel")
     public ParticipationRequestDto cancelRequest(@PathVariable(name = "userId") Long userId,
                                                            @PathVariable(name = "requestId") Long requestId) {
-        return service.addParticipationRequest(userId, requestId);
+        return service.cancelRequest(userId, requestId);
     }
 }
