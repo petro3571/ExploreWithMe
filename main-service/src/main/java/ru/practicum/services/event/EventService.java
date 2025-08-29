@@ -22,7 +22,7 @@ public interface EventService {
 
     EventRequestStatusUpdateResul changeRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest request);
 
-    List<EventFullDto> getEvents_2(List<Long> userIds,
+    Page<EventFullDto> getEvents_2(List<Long> userIds,
                                    List<String> states,
                                    List<Long> categoryIds,
                                    LocalDateTime rangeStart,

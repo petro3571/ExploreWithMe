@@ -1,10 +1,12 @@
 package ru.practicum.services.event;
 
+//import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.StatsClient;
+//import ru.practicum.ViewStatsDto;
 import ru.practicum.dto.enums.RequestStatus;
 import ru.practicum.dto.enums.RuleSort;
 import ru.practicum.dto.enums.State;
@@ -39,6 +41,7 @@ public class EventServiceImpl implements EventService {
     private final RequestRepository requestRepository;
     private final LocationRepository locationRepository;
     private final StatsClient statsClient;
+//    private final ObjectMapper objectMapper;
 
     @Override
     public EventFullDto addEvent(NewEventRequest request, Long userId) {
@@ -184,47 +187,47 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-//    @Override
-//    @Transactional(readOnly = true)
-//    public Page<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
-//                                          LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
-//        Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
-//
-//        Page<Event> requestsPage = eventRepository.findByInitiator_IdInAndEventDateBetweenAndCategory_IdInAndStateIn(userIds, rangeStart, rangeEnd, categoryIds, states, pageable);
-//
-//        if (!requestsPage.getContent().isEmpty()) {
-//            List<EventFullDto> content = requestsPage.getContent().stream()
-//                    .map(event -> EventMapper.mapToFullEventDtoFormEvent(event))
-//                    .sorted(Comparator.comparing(EventFullDto::getEventDate))
-//                    .collect(Collectors.toList());
-//
-//            return new PageImpl<>(
-//                    content,
-//                    requestsPage.getPageable(),
-//                    requestsPage.getTotalElements()
-//            );
-//        } else {
-//            return new PageImpl<>(
-//                    Collections.emptyList(),
-//                    requestsPage.getPageable(),
-//                    requestsPage.getTotalElements()
-//            );
-//        }
-//    }
-
     @Override
     @Transactional(readOnly = true)
-    public List<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
+    public Page<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
+        Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
 
-        List<Event> result = eventRepository.findByParam(userIds, rangeStart, rangeEnd, categoryIds, states, from, size);
+        Page<Event> requestsPage = eventRepository.findByInitiator_IdInAndEventDateBetweenAndCategory_IdInAndStateIn(userIds, rangeStart, rangeEnd, categoryIds, states, pageable);
 
-        if (result.isEmpty()) {
-            return Collections.emptyList();
+        if (!requestsPage.getContent().isEmpty()) {
+            List<EventFullDto> content = requestsPage.getContent().stream()
+                    .map(event -> EventMapper.mapToFullEventDtoFormEvent(event))
+                    .sorted(Comparator.comparing(EventFullDto::getEventDate))
+                    .collect(Collectors.toList());
+
+            return new PageImpl<>(
+                    content,
+                    requestsPage.getPageable(),
+                    requestsPage.getTotalElements()
+            );
         } else {
-            return result.stream().map(event -> EventMapper.mapToFullEventDtoFormEvent(event)).collect(Collectors.toList());
+            return new PageImpl<>(
+                    Collections.emptyList(),
+                    requestsPage.getPageable(),
+                    requestsPage.getTotalElements()
+            );
         }
     }
+
+//    @Override
+//    @Transactional(readOnly = true)
+//    public List<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
+//                                          LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
+//
+//        List<Event> result = eventRepository.findByParam(userIds, rangeStart, rangeEnd, categoryIds, states, from, size);
+//
+//        if (result.isEmpty()) {
+//            return Collections.emptyList();
+//        } else {
+//            return result.stream().map(event -> EventMapper.mapToFullEventDtoFormEvent(event)).collect(Collectors.toList());
+//        }
+//    }
 
     @Override
     public EventFullDto updateEvent_1(Long eventId, UpdateEventAdminRequest request) {
@@ -450,4 +453,37 @@ public class EventServiceImpl implements EventService {
         }
         return findEvent;
     }
+
+//    private Map<Integer, Long> findViewsForEvents(List<Event> events) {
+//        String uriTemplate = "/events/";
+//        LocalDateTime start = events.stream().map(Event::getCreatedOn).min(LocalDateTime::compareTo).get();
+//        List<String> uris = events.stream().map(event -> uriTemplate + event.getId()).toList();
+//        Object response = statsClient.getStats(start.format(FORMATTER),
+//                        LocalDateTime.now().format(FORMATTER),
+//                        uris,
+//                        true)
+//                .getBody();
+//        if (!(response instanceof List<?> responseList)) {
+//            throw new InternalError("Error in servers' interactions. Unknown response Class: " + response.getClass());
+//        }
+//        List<ViewStatsDto> stats = responseList.stream().filter(responseElement -> responseElement instanceof Map)
+//                .map(responseElement -> objectMapper.convertValue(responseElement, ViewStatsDto.class))
+//                .filter(stat -> stat.getUri().startsWith(uriTemplate))
+//                .toList();
+//        Map<Integer, Long> result = new HashMap<>();
+//        for (ViewStatsDto stat: stats) {
+//            try {
+//                Integer id = Integer.parseInt(stat.getUri().substring(stat.getUri().lastIndexOf('/') + 1));
+//                result.put(id, stat.getHits());
+//            } catch (NumberFormatException e) {
+//                throw new InternalError("Error in parsing event id while counting views for event");
+//            }
+//        }
+//        for (Event event: events) {
+//            if (!result.containsKey(event.getId())) {
+//                result.put(Math.toIntExact(event.getId()), 0L);
+//            }
+//        }
+//        return result;
+//    }
 }
