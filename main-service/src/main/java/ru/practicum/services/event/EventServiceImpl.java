@@ -235,7 +235,7 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public Page<EventShortDto> getEvents_1(String text, List<Long> categoryIds, boolean paid, LocalDateTime rangeStart,
                                            LocalDateTime rangeEnd, boolean onlyAvailable, RuleSort sort, int from, int size) {
-        if (sort.toString().toUpperCase().equals(RuleSort.EVENT_DATE) || sort == null) {
+        if (sort.toString().toUpperCase().equals(RuleSort.EVENT_DATE.toString()) || sort == null) {
             Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
             if (rangeStart == null && rangeEnd == null) {
                 Page<Event> requestsPage = eventRepository.findByAfterNowEvent(text, categoryIds, paid, LocalDateTime.now(), pageable);
@@ -280,7 +280,7 @@ public class EventServiceImpl implements EventService {
                     );
                 }
             }
-        } else if (sort.toString().toUpperCase().equals(RuleSort.VIEWS)) {
+        } else if (sort.toString().toUpperCase().equals(RuleSort.VIEWS.toString())) {
             Pageable pageable1 = PageRequest.of(from, size, Sort.by("views"));
             if (rangeStart == null && rangeEnd == null) {
                 Page<Event> requestsPage = eventRepository.findByAfterNowEvent(text, categoryIds, paid, LocalDateTime.now(), pageable1);
