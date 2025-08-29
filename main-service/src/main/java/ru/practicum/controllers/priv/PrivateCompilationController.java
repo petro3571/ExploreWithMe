@@ -1,6 +1,5 @@
 package ru.practicum.controllers.priv;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;

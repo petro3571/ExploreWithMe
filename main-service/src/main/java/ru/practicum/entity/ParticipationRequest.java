@@ -3,7 +3,6 @@ package ru.practicum.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import ru.practicum.dto.enums.RequestStatus;
-import ru.practicum.dto.enums.State;
 
 import java.time.LocalDateTime;
 

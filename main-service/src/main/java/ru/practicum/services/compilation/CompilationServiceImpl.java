@@ -1,4 +1,4 @@
-package ru.practicum.services.сompilation;
+package ru.practicum.services.compilation;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class CompilationServiceImpl implements CompilationService{
+public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
     private final CompilationEventsRepo compilationEventsRepo;
@@ -53,7 +53,7 @@ public class CompilationServiceImpl implements CompilationService{
             CompilationDto compilationDto = CompilationMapper.mapToCompDto(compilation);
             compilationDto.setEvents(listShortDto);
             return compilationDto;
-        } {
+        } else {
             throw  new ConflictException("Integrity constraint has been violated.");
         }
     }
@@ -68,6 +68,7 @@ public class CompilationServiceImpl implements CompilationService{
             compilationRepository.delete(findCompilation.get());
         }
     }
+
     @Override
     public CompilationDto updateCompilation(Long compId, UpdateCompilationDto request) {
         Optional<Compilation> compilation = compilationRepository.findById(compId);

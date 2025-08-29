@@ -3,11 +3,7 @@ package ru.practicum.mappers;
 import ru.practicum.dto.compilation.CompilationDto;
 import ru.practicum.dto.compilation.NewCompilationDto;
 import ru.practicum.dto.compilation.UpdateCompilationDto;
-import ru.practicum.dto.event.UpdateEventUserRequest;
-import ru.practicum.dto.user.UserDto;
 import ru.practicum.entity.Compilation;
-import ru.practicum.entity.Event;
-import ru.practicum.entity.User;
 
 public class CompilationMapper {
 

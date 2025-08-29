@@ -2,6 +2,7 @@ package ru.practicum.dto.event;
 
 import lombok.Data;
 import ru.practicum.dto.enums.StateAction;
+import ru.practicum.entity.Location;
 
 import java.time.LocalDateTime;
 
@@ -15,7 +16,8 @@ public class UpdateEventAdminRequest {
 
     private LocalDateTime eventDate;
 
-    //    private Location location;
+    private Location location;
+
     private boolean paid;
 
     private Integer participantLimit;
@@ -24,5 +26,5 @@ public class UpdateEventAdminRequest {
 
     private String title;
 
-    private StateAction stateAction ;
+    private StateAction stateAction;
 }

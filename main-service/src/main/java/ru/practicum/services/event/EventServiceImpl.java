@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class EventServiceImpl implements EventService{
+public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
@@ -36,10 +36,7 @@ public class EventServiceImpl implements EventService{
 
     @Override
     public EventFullDto addEvent(NewEventRequest request, Long userId) {
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        }
+        Optional<User> findUser = findUserMethod(userId);
 
         Optional<Category> category = categoryRepository.findById(request.getCategoryId());
         if (category.isEmpty()) {
@@ -66,10 +63,7 @@ public class EventServiceImpl implements EventService{
     @Override
     @Transactional(readOnly = true)
     public Page<EventShortDto> getEvents(Long userId, int from, int size) {
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        }
+        Optional<User> findUser = findUserMethod(userId);
 
         Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
 
@@ -98,14 +92,7 @@ public class EventServiceImpl implements EventService{
     @Override
     @Transactional(readOnly = true)
     public EventFullDto getEvent(Long userId, Long eventId) {
-        if (eventId == null) {
-            throw new RuntimeException("Id события нет.");
-        }
-
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        }
+        Optional<User> findUser = findUserMethod(userId);
 
         Optional<Event> findEvent = eventRepository.findByIdAndInitiator_Id(eventId, userId);
 
@@ -118,14 +105,7 @@ public class EventServiceImpl implements EventService{
 
     @Override
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest request) {
-        if (eventId == null) {
-            throw new RuntimeException("Id события нет.");
-        }
-
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        }
+        Optional<User> findUser = findUserMethod(userId);
 
         Optional<Category> category = categoryRepository.findById(request.getCategoryId());
         if (category.isEmpty()) {
@@ -147,18 +127,7 @@ public class EventServiceImpl implements EventService{
     @Override
     @Transactional(readOnly = true)
     public List<ParticipationRequestDto> getEventParticipants(Long userId, Long eventId) {
-        if (eventId == null) {
-            throw new RuntimeException("Id события нет.");
-        }
-
-        if (userId == null) {
-            throw new RuntimeException("Id пользователя нет.");
-        }
-
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        }
+        Optional<User> findUser = findUserMethod(userId);
 
         List<ParticipationRequest> requests = requestRepository.findByEvent_IdAndRequester_Id(eventId, userId);
 
@@ -168,31 +137,11 @@ public class EventServiceImpl implements EventService{
             return requests.stream().map(request -> RequestMapper.mapToRequestDtoFromRequest(request))
                     .collect(Collectors.toList());
         }
-//        Optional<Event> findEvent = eventRepository.findByIdAndInitiator_Id(eventId, userId);
-//        if (findEvent.isEmpty()) {
-//            throw new NotFoundUserException("Событие с id " + eventId + "нет.");
-//        }
-//
-//        ParticipationRequest request = new ParticipationRequest();
-//        request.setCreated(LocalDateTime.now());
-//        request.setEvent(findEvent.get());
-//        request.setRequester(findUser.get());
     }
 
     @Override
     public EventRequestStatusUpdateResul changeRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest eventrequest) {
-        if (eventId == null) {
-            throw new RuntimeException("Id события нет.");
-        }
-
-        if (userId == null) {
-            throw new RuntimeException("Id пользователя нет.");
-        }
-
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        }
+        Optional<User> findUser = findUserMethod(userId);
 
         Optional<Event> findEvent = eventRepository.findByIdAndInitiator_Id(eventId, userId);
         if (findEvent.isEmpty()) {
@@ -218,7 +167,7 @@ public class EventServiceImpl implements EventService{
             } else {
                 return request.get();
             }
-        }).filter( r -> r.getStatus().equals(RequestStatus.PENDING)).peek(r -> {
+        }).filter(r -> r.getStatus().equals(RequestStatus.PENDING)).peek(r -> {
             r.setStatus(status);
             requestRepository.save(r);
         }).map(request1 -> RequestMapper.mapToRequestDtoFromRequest(request1)).toList();
@@ -262,10 +211,7 @@ public class EventServiceImpl implements EventService{
 
     @Override
     public EventFullDto updateEvent_1(Long eventId, UpdateEventAdminRequest request) {
-        Optional<Event> findEvent = eventRepository.findById(eventId);
-        if (findEvent.isEmpty()) {
-            throw new NotFoundUserException("События с id " + eventId + " нет");
-        }
+        Optional<Event> findEvent = findEventMethod(eventId);
 
         if (request.getStateAction().equals(StateAction.CANCEL_REVIEW) && findEvent.get().getState().equals(State.PUBLISHED)) {
             throw new RequestConditionsException("Событие не удовлетворяет правилам редактирования");
@@ -382,10 +328,7 @@ public class EventServiceImpl implements EventService{
     @Override
     @Transactional(readOnly = true)
     public EventFullDto getEvent_1(Long eventId) {
-        Optional<Event> findEvent = eventRepository.findById(eventId);
-        if (findEvent.isEmpty()) {
-            throw new NotFoundUserException("События с id " + eventId + " нет");
-        }
+        Optional<Event> findEvent = findEventMethod(eventId);
 
         if (findEvent.get().getState().equals(State.PUBLISHED)) {
             return EventMapper.mapToFullEventDtoFormEvent(findEvent.get());
@@ -397,10 +340,7 @@ public class EventServiceImpl implements EventService{
     @Override
     @Transactional(readOnly = true)
     public List<ParticipationRequestDto> getUserRequests(Long userId) {
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        }
+        Optional<User> findUser = findUserMethod(userId);
 
         List<ParticipationRequest> listRequest = requestRepository.findByRequester_Id(userId);
 
@@ -414,15 +354,9 @@ public class EventServiceImpl implements EventService{
 
     @Override
     public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        }
+        Optional<User> findUser = findUserMethod(userId);
 
-        Optional<Event> findEvent = eventRepository.findById(eventId);
-        if (findEvent.isEmpty()) {
-            throw new NotFoundUserException("Событие с id " + userId + "нет.");
-        }
+        Optional<Event> findEvent = findEventMethod(eventId);
 
         List<ParticipationRequest> findRequests = requestRepository.findByEvent_IdAndRequester_Id(eventId, userId);
 
@@ -452,10 +386,7 @@ public class EventServiceImpl implements EventService{
 
     @Override
     public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
-        Optional<User> findUser = userRepository.findById(userId);
-        if (findUser.isEmpty()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        }
+        Optional<User> findUser = findUserMethod(userId);
 
         Optional<ParticipationRequest> findRequest = requestRepository.findById(requestId);
         if (findRequest.isEmpty()) {
@@ -468,5 +399,21 @@ public class EventServiceImpl implements EventService{
         } else {
             throw new ConflictException("Пользователь не является автором заявки.");
         }
+    }
+
+    private Optional<User> findUserMethod(Long userId) {
+        Optional<User> findUser = userRepository.findById(userId);
+        if (findUser.isEmpty()) {
+            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
+        }
+        return findUser;
+    }
+
+    private Optional<Event> findEventMethod(Long eventId) {
+        Optional<Event> findEvent = eventRepository.findById(eventId);
+        if (findEvent.isEmpty()) {
+            throw new NotFoundUserException("Событие с id " + eventId + "нет.");
+        }
+        return findEvent;
     }
 }

@@ -1,12 +1,10 @@
 package ru.practicum.mappers;
 
-import ru.practicum.dto.category.CategoryDto;
-import ru.practicum.dto.category.NewCategoryRequest;
 import ru.practicum.dto.enums.State;
 import ru.practicum.dto.enums.StateAction;
 import ru.practicum.dto.event.*;
-import ru.practicum.entity.Category;
 import ru.practicum.entity.Event;
+import ru.practicum.entity.Location;
 
 public class EventMapper {
     public static Event mapToEventFromFullDto(EventFullDto dto) {
@@ -132,6 +130,13 @@ public class EventMapper {
             event.setState(State.PENDING);
         }
 
+        if (request.getLocation().getLat() != 0 && request.getLocation().getLon() != 0) {
+            Location location = new Location();
+            location.setLat(request.getLocation().getLat());
+            location.setLon(request.getLocation().getLon());
+            event.setLocation(location);
+        }
+
         return event;
     }
 
@@ -170,6 +175,13 @@ public class EventMapper {
 
         if (request.getStateAction().equals(StateAction.SEND_TO_REVIEW)) {
             event.setState(State.PENDING);
+        }
+
+        if (request.getLocation().getLat() != 0 && request.getLocation().getLon() != 0) {
+            Location location = new Location();
+            location.setLat(request.getLocation().getLat());
+            location.setLon(request.getLocation().getLon());
+            event.setLocation(location);
         }
 
         return event;

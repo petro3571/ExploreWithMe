@@ -6,14 +6,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.category.NewCategoryRequest;
-import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.entity.Category;
 import ru.practicum.entity.Event;
 import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.DuplicateCategoryException;
 import ru.practicum.exceptions.NotFoundUserException;
 import ru.practicum.mappers.CategoryMapper;
-import ru.practicum.mappers.EventMapper;
 import ru.practicum.repo.CategoryRepository;
 import ru.practicum.repo.EventRepository;
 

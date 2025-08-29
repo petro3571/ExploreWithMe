@@ -2,7 +2,6 @@ package ru.practicum.dto.participationRequest;
 
 import lombok.Data;
 import ru.practicum.dto.enums.RequestStatus;
-import ru.practicum.dto.enums.State;
 
 import java.time.LocalDateTime;
 

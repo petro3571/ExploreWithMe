@@ -6,7 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.StatsClient;
 import ru.practicum.dto.compilation.CompilationDto;
-import ru.practicum.services.сompilation.CompilationService;
+import ru.practicum.services.compilation.CompilationService;
 
 @RestController
 @RequestMapping(path = "/compilations", produces = MediaType.APPLICATION_JSON_VALUE)

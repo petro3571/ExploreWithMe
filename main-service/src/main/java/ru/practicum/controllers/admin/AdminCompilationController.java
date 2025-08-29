@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.compilation.CompilationDto;
 import ru.practicum.dto.compilation.NewCompilationDto;
 import ru.practicum.dto.compilation.UpdateCompilationDto;
-import ru.practicum.services.сompilation.CompilationService;
+import ru.practicum.services.compilation.CompilationService;
 
 @RestController
 @RequestMapping(path = "/admin/compilations", produces = MediaType.APPLICATION_JSON_VALUE)

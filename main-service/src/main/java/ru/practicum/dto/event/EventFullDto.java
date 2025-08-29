@@ -3,7 +3,6 @@ package ru.practicum.dto.event;
 import lombok.Data;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.enums.State;
-import ru.practicum.dto.location.LocationDto;
 import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.entity.Location;
 
