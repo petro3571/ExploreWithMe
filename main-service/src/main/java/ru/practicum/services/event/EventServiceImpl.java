@@ -184,31 +184,45 @@ public class EventServiceImpl implements EventService {
         }
     }
 
+//    @Override
+//    @Transactional(readOnly = true)
+//    public Page<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
+//                                          LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
+//        Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
+//
+//        Page<Event> requestsPage = eventRepository.findByInitiator_IdInAndEventDateBetweenAndCategory_IdInAndStateIn(userIds, rangeStart, rangeEnd, categoryIds, states, pageable);
+//
+//        if (!requestsPage.getContent().isEmpty()) {
+//            List<EventFullDto> content = requestsPage.getContent().stream()
+//                    .map(event -> EventMapper.mapToFullEventDtoFormEvent(event))
+//                    .sorted(Comparator.comparing(EventFullDto::getEventDate))
+//                    .collect(Collectors.toList());
+//
+//            return new PageImpl<>(
+//                    content,
+//                    requestsPage.getPageable(),
+//                    requestsPage.getTotalElements()
+//            );
+//        } else {
+//            return new PageImpl<>(
+//                    Collections.emptyList(),
+//                    requestsPage.getPageable(),
+//                    requestsPage.getTotalElements()
+//            );
+//        }
+//    }
+
     @Override
     @Transactional(readOnly = true)
-    public Page<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
+    public List<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
-        Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
 
-        Page<Event> requestsPage = eventRepository.findByInitiator_IdInAndEventDateBetweenAndCategory_IdInAndStateIn(userIds, rangeStart, rangeEnd, categoryIds, states, pageable);
+        List<Event> result = eventRepository.findByParam(userIds, rangeStart, rangeEnd, categoryIds, states, from, size);
 
-        if (!requestsPage.getContent().isEmpty()) {
-            List<EventFullDto> content = requestsPage.getContent().stream()
-                    .map(event -> EventMapper.mapToFullEventDtoFormEvent(event))
-                    .sorted(Comparator.comparing(EventFullDto::getEventDate))
-                    .collect(Collectors.toList());
-
-            return new PageImpl<>(
-                    content,
-                    requestsPage.getPageable(),
-                    requestsPage.getTotalElements()
-            );
+        if (result.isEmpty()) {
+            return Collections.emptyList();
         } else {
-            return new PageImpl<>(
-                    Collections.emptyList(),
-                    requestsPage.getPageable(),
-                    requestsPage.getTotalElements()
-            );
+            return result.stream().map(event -> EventMapper.mapToFullEventDtoFormEvent(event)).collect(Collectors.toList());
         }
     }
 
