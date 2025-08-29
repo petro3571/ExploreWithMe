@@ -35,6 +35,7 @@ public class EventMapper {
         dto.setCategory(CategoryMapper.mapToCategoryDto(event.getCategory()));
         dto.setConfirmedRequests(event.getConfirmedRequests());
         dto.setEventDate(event.getEventDate());
+        dto.setLocation(event.getLocation());
         dto.setInitiator(UserMapper.mapToShortDtoFromUser(event.getInitiator()));//
         dto.setPaid(event.isPaid());
         dto.setParticipantLimit(event.getParticipantLimit());

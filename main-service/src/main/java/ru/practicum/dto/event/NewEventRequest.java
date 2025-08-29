@@ -6,7 +6,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import ru.practicum.dto.enums.State;
-import ru.practicum.entity.Location;
+import ru.practicum.dto.location.LocationDto;
 
 import java.time.LocalDateTime;
 
@@ -25,7 +25,7 @@ public class NewEventRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
-    private Location location;
+    private LocationDto location;
 
     private boolean paid;
 

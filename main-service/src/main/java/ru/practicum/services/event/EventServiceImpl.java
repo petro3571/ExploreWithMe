@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.StatsClient;
 import ru.practicum.dto.enums.RequestStatus;
+import ru.practicum.dto.enums.RuleSort;
 import ru.practicum.dto.enums.State;
 import ru.practicum.dto.enums.StateAction;
 import ru.practicum.dto.event.*;
@@ -17,10 +19,12 @@ import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.NotFoundUserException;
 import ru.practicum.exceptions.RequestConditionsException;
 import ru.practicum.mappers.EventMapper;
+import ru.practicum.mappers.LocationMapper;
 import ru.practicum.mappers.RequestMapper;
 import ru.practicum.repo.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,11 +32,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class EventServiceImpl implements EventService {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
     private final RequestRepository requestRepository;
     private final LocationRepository locationRepository;
+    private final StatsClient statsClient;
 
     @Override
     public EventFullDto addEvent(NewEventRequest request, Long userId) {
@@ -47,12 +53,10 @@ public class EventServiceImpl implements EventService {
         event.setCategory(category.get());
         event.setInitiator(findUser.get());
         if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new RequestConditionsException("For the requested operation the conditions are not met.");
+            throw new BadRequestException("For the requested operation the conditions are not met.");
         }
 
-        Location location = new Location();
-        location.setLon(request.getLocation().getLon());
-        location.setLat(request.getLocation().getLat());
+        Location location = LocationMapper.mapToLoc(request.getLocation());
         event.setLocation(locationRepository.save(location));
         event.setCreatedOn(LocalDateTime.now());
 
@@ -230,99 +234,98 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public Page<EventShortDto> getEvents_1(String text, List<Long> categoryIds, boolean paid, LocalDateTime rangeStart,
-                                           LocalDateTime rangeEnd, boolean onlyAvailable, String sort, int from, int size) {
-        switch (sort.toLowerCase()) {
-            case "event_date":
-                Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
-                if (rangeStart == null && rangeEnd == null) {
-                    Page<Event> requestsPage = eventRepository.findByAfterNowEvent(text, categoryIds, paid, LocalDateTime.now(), pageable);
+                                           LocalDateTime rangeEnd, boolean onlyAvailable, RuleSort sort, int from, int size) {
+        if (sort.toString().toUpperCase().equals(RuleSort.EVENT_DATE) || sort == null) {
+            Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
+            if (rangeStart == null && rangeEnd == null) {
+                Page<Event> requestsPage = eventRepository.findByAfterNowEvent(text, categoryIds, paid, LocalDateTime.now(), pageable);
 
-                    if (!requestsPage.getContent().isEmpty()) {
-                        List<EventShortDto> content = requestsPage.getContent().stream()
-                                .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
-                                .sorted(Comparator.comparing(EventShortDto::getEventDate))
-                                .collect(Collectors.toList());
+                if (!requestsPage.getContent().isEmpty()) {
+                    List<EventShortDto> content = requestsPage.getContent().stream()
+                            .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
+                            .sorted(Comparator.comparing(EventShortDto::getEventDate))
+                            .collect(Collectors.toList());
 
-                        return new PageImpl<>(
-                                content,
-                                requestsPage.getPageable(),
-                                requestsPage.getTotalElements()
-                        );
-                    } else {
-                        return new PageImpl<>(
-                                Collections.emptyList(),
-                                requestsPage.getPageable(),
-                                requestsPage.getTotalElements()
-                        );
-                    }
+                    return new PageImpl<>(
+                            content,
+                            requestsPage.getPageable(),
+                            requestsPage.getTotalElements()
+                    );
                 } else {
-                    Page<Event> requestsPage = eventRepository.findByDescriptionContainingIgnoreCaseOrAnnotationContainingIgnoreCaseAndCategory_IdInAndPaidAndEventDateBetweenAndConfirmedRequestsLessThan(text, categoryIds, paid, rangeStart, rangeEnd, pageable);
-
-                    if (!requestsPage.getContent().isEmpty()) {
-                        List<EventShortDto> content = requestsPage.getContent().stream()
-                                .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
-                                .sorted(Comparator.comparing(EventShortDto::getEventDate))
-                                .collect(Collectors.toList());
-
-                        return new PageImpl<>(
-                                content,
-                                requestsPage.getPageable(),
-                                requestsPage.getTotalElements()
-                        );
-                    } else {
-                        return new PageImpl<>(
-                                Collections.emptyList(),
-                                requestsPage.getPageable(),
-                                requestsPage.getTotalElements()
-                        );
-                    }
+                    return new PageImpl<>(
+                            Collections.emptyList(),
+                            requestsPage.getPageable(),
+                            requestsPage.getTotalElements()
+                    );
                 }
-            case "views":
-                Pageable pageable1 = PageRequest.of(from, size, Sort.by("views"));
-                if (rangeStart == null && rangeEnd == null) {
-                    Page<Event> requestsPage = eventRepository.findByAfterNowEvent(text, categoryIds, paid, LocalDateTime.now(), pageable1);
+            } else {
+                Page<Event> requestsPage = eventRepository.findByDescriptionContainingIgnoreCaseOrAnnotationContainingIgnoreCaseAndCategory_IdInAndPaidAndEventDateBetweenAndConfirmedRequestsLessThan(text, categoryIds, paid, rangeStart, rangeEnd, pageable);
 
-                    if (!requestsPage.getContent().isEmpty()) {
-                        List<EventShortDto> content = requestsPage.getContent().stream()
-                                .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
-                                .sorted(Comparator.comparing(EventShortDto::getViews))
-                                .collect(Collectors.toList());
+                if (!requestsPage.getContent().isEmpty()) {
+                    List<EventShortDto> content = requestsPage.getContent().stream()
+                            .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
+                            .sorted(Comparator.comparing(EventShortDto::getEventDate))
+                            .collect(Collectors.toList());
 
-                        return new PageImpl<>(
-                                content,
-                                requestsPage.getPageable(),
-                                requestsPage.getTotalElements()
-                        );
-                    } else {
-                        return new PageImpl<>(
-                                Collections.emptyList(),
-                                requestsPage.getPageable(),
-                                requestsPage.getTotalElements()
-                        );
-                    }
+                    return new PageImpl<>(
+                            content,
+                            requestsPage.getPageable(),
+                            requestsPage.getTotalElements()
+                    );
                 } else {
-                    Page<Event> requestsPage = eventRepository.findByDescriptionContainingIgnoreCaseOrAnnotationContainingIgnoreCaseAndCategory_IdInAndPaidAndEventDateBetweenAndConfirmedRequestsLessThan(text, categoryIds, paid, rangeStart, rangeEnd, pageable1);
-
-                    if (!requestsPage.getContent().isEmpty()) {
-                        List<EventShortDto> content = requestsPage.getContent().stream()
-                                .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
-                                .sorted(Comparator.comparing(EventShortDto::getViews))
-                                .collect(Collectors.toList());
-
-                        return new PageImpl<>(
-                                content,
-                                requestsPage.getPageable(),
-                                requestsPage.getTotalElements()
-                        );
-                    } else {
-                        return new PageImpl<>(
-                                Collections.emptyList(),
-                                requestsPage.getPageable(),
-                                requestsPage.getTotalElements()
-                        );
-                    }
+                    return new PageImpl<>(
+                            Collections.emptyList(),
+                            requestsPage.getPageable(),
+                            requestsPage.getTotalElements()
+                    );
                 }
-            default:
+            }
+        } else if (sort.toString().toUpperCase().equals(RuleSort.VIEWS)) {
+            Pageable pageable1 = PageRequest.of(from, size, Sort.by("views"));
+            if (rangeStart == null && rangeEnd == null) {
+                Page<Event> requestsPage = eventRepository.findByAfterNowEvent(text, categoryIds, paid, LocalDateTime.now(), pageable1);
+
+                if (!requestsPage.getContent().isEmpty()) {
+                    List<EventShortDto> content = requestsPage.getContent().stream()
+                            .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
+                            .sorted(Comparator.comparing(EventShortDto::getViews))
+                            .collect(Collectors.toList());
+
+                    return new PageImpl<>(
+                            content,
+                            requestsPage.getPageable(),
+                            requestsPage.getTotalElements()
+                    );
+                } else {
+                    return new PageImpl<>(
+                            Collections.emptyList(),
+                            requestsPage.getPageable(),
+                            requestsPage.getTotalElements()
+                    );
+                }
+            } else {
+                Page<Event> requestsPage = eventRepository.findByDescriptionContainingIgnoreCaseOrAnnotationContainingIgnoreCaseAndCategory_IdInAndPaidAndEventDateBetweenAndConfirmedRequestsLessThan(text, categoryIds, paid, rangeStart, rangeEnd, pageable1);
+
+                if (!requestsPage.getContent().isEmpty()) {
+                    List<EventShortDto> content = requestsPage.getContent().stream()
+                            .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
+                            .sorted(Comparator.comparing(EventShortDto::getViews))
+                            .collect(Collectors.toList());
+
+                    return new PageImpl<>(
+                            content,
+                            requestsPage.getPageable(),
+                            requestsPage.getTotalElements()
+                    );
+                } else {
+                    return new PageImpl<>(
+                            Collections.emptyList(),
+                            requestsPage.getPageable(),
+                            requestsPage.getTotalElements()
+                    );
+                }
+            }
+        } else {
                 throw new BadRequestException("Incorrectly made request.");
         }
     }
@@ -376,13 +379,15 @@ public class EventServiceImpl implements EventService {
             request.setCreated(LocalDateTime.now());
 
             return RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-        } else {
+        } else if (findEvent.get().isRequestModeration() == false && (findEvent.get().getParticipantLimit() == 0 || findEvent.get().getConfirmedRequests() < findEvent.get().getParticipantLimit())) {
             ParticipationRequest request = new ParticipationRequest();
             request.setEvent(findEvent.get());
             request.setRequester(findUser.get());
             request.setStatus(RequestStatus.PENDING);
             request.setCreated(LocalDateTime.now());
             return RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
+        } else {
+            throw new ConflictException("Integrity constraint has been violated.");
         }
     }
 
@@ -401,6 +406,14 @@ public class EventServiceImpl implements EventService {
         } else {
             throw new ConflictException("Пользователь не является автором заявки.");
         }
+    }
+
+    @Override
+    @Transactional
+    public EventFullDto changeViewsEvent(EventFullDto dto) {
+        Event event = EventMapper.mapToEventFromFullDto(dto);
+        event.setViews(event.getViews() + 1);
+        return EventMapper.mapToFullEventDtoFormEvent(eventRepository.save(event));
     }
 
     private Optional<User> findUserMethod(Long userId) {

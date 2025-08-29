@@ -17,7 +17,7 @@
 
  CREATE TABLE IF NOT EXISTS events (
            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-           title VARCHAR(64),
+           title VARCHAR(120),
            annotation VARCHAR(2000),
            category_id INTEGER REFERENCES categories ON DELETE CASCADE,
            confirmed_requests INT,

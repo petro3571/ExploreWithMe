@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.HitDto;
 import ru.practicum.StatsClient;
+import ru.practicum.dto.enums.RuleSort;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.services.event.EventService;
@@ -33,7 +34,7 @@ public class PublicEventController {
                                            @RequestParam(required = false)
                                               @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
                                            @RequestParam(required = false) boolean onlyAvailable,
-                                           @RequestParam(required = false) String sort,
+                                           @RequestParam(required = false) RuleSort sort,
                                           @RequestParam(defaultValue = "0") int from,
                                            @RequestParam(defaultValue = "10") int size, HttpServletRequest request
                                           ) {
@@ -58,6 +59,6 @@ public class PublicEventController {
         hitDto.setUri(request.getRequestURI());
         hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
         statsClient.postHit(hitDto);
-        return result;
+        return service.changeViewsEvent(result);
     }
 }

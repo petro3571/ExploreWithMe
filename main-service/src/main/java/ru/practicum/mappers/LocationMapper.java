@@ -4,9 +4,8 @@ import ru.practicum.dto.location.LocationDto;
 import ru.practicum.entity.Location;
 
 public class LocationMapper {
-    public static Location mapToUser(LocationDto dto) {
+    public static Location mapToLoc(LocationDto dto) {
         Location location = new Location();
-        location.setId(dto.getId());
         location.setLat(dto.getLat());
         location.setLon(dto.getLon());
         return location;
@@ -14,7 +13,6 @@ public class LocationMapper {
 
     public static LocationDto mapToUserDto(Location location) {
         LocationDto dto = new LocationDto();
-        dto.setId(location.getId());
         dto.setLat(location.getLat());
         dto.setLon(location.getLon());
         return dto;
