@@ -365,10 +365,15 @@ public class EventServiceImpl implements EventService {
 
         List<ParticipationRequest> findRequests = requestRepository.findByEvent_IdAndRequester_Id(eventId, userId);
 
-        if (findRequests.isEmpty() || findEvent.get().getInitiator().equals(findUser.get())
-                || findEvent.get().getState().equals(State.PENDING) || findEvent.get().getState().equals(State.CANCELED)
-                || findEvent.get().getConfirmedRequests() >= findEvent.get().getParticipantLimit()) {
+        if (!findRequests.isEmpty() || findEvent.get().getInitiator().equals(findUser.get())
+                || findEvent.get().getState().equals(State.PENDING) || findEvent.get().getState().equals(State.CANCELED)) {
             throw new ConflictException("Integrity constraint has been violated.");
+        }
+
+        if (findEvent.get().getConfirmedRequests() != null) {
+            if (findEvent.get().getConfirmedRequests() >= findEvent.get().getParticipantLimit()) {
+                throw new ConflictException("Integrity constraint has been violated.");
+            }
         }
 
         if (findEvent.get().isRequestModeration() == false) {
@@ -379,7 +384,7 @@ public class EventServiceImpl implements EventService {
             request.setCreated(LocalDateTime.now());
 
             return RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-        } else if (findEvent.get().isRequestModeration() == false && (findEvent.get().getParticipantLimit() == 0 || findEvent.get().getConfirmedRequests() < findEvent.get().getParticipantLimit())) {
+        } else if (findEvent.get().isRequestModeration() == true || (findEvent.get().getParticipantLimit() == 0 /*|| findEvent.get().getConfirmedRequests() < findEvent.get().getParticipantLimit()*/)) {
             ParticipationRequest request = new ParticipationRequest();
             request.setEvent(findEvent.get());
             request.setRequester(findUser.get());

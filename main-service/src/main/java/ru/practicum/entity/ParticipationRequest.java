@@ -30,7 +30,7 @@ public class ParticipationRequest {
     private User requester;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "state")
+    @Column(name = "status")
     private RequestStatus status;
 
     @Override
