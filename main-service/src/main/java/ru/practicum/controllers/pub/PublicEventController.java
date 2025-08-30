@@ -2,7 +2,6 @@ package ru.practicum.controllers.pub;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +24,7 @@ public class PublicEventController {
     private final StatsClient statsClient;
 
     @GetMapping
-    public Page<EventShortDto> getEvents_1(@RequestParam(required = false) String text,
+    public List<EventShortDto> getEvents_1(@RequestParam(required = false) String text,
                                            @RequestParam(required = false) List<Long> categories,
                                            @RequestParam(required = false) boolean paid,
                                            @RequestParam(required = false)
@@ -37,7 +36,7 @@ public class PublicEventController {
                                           @RequestParam(defaultValue = "0") int from,
                                            @RequestParam(defaultValue = "10") int size, HttpServletRequest request
                                           ) {
-        Page<EventShortDto> result = service.getEvents_1(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
+        List<EventShortDto> result = service.getEvents_1(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
                 sort, from, size);
 
         HitDto hitDto = new HitDto();
@@ -58,6 +57,6 @@ public class PublicEventController {
         hitDto.setUri(request.getRequestURI());
         hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
         statsClient.postHit(hitDto);
-        return service.changeViewsEvent(result);
+        return result;
     }
 }

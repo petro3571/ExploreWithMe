@@ -12,7 +12,6 @@ import java.util.Map;
 
 @Service
 public class StatsClient extends BaseClient {
-
     @Autowired
     public StatsClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
         super(
@@ -30,7 +29,12 @@ public class StatsClient extends BaseClient {
                                            String end,
                                            List<String> uris,
                                            Boolean unique) {
-        Map<String, Object> parameters = Map.of("start", start, "end", end, "uris", uris, "unique", unique);
+        Map<String, Object> parameters = Map.of(
+                "start", start,
+                "end", end,
+                "uris", uris,
+                "unique", unique
+        );
         return get("/stats", parameters);
     }
 }

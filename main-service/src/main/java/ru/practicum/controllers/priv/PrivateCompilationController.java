@@ -1,6 +1,7 @@
 package ru.practicum.controllers.priv;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.participationRequest.ParticipationRequestDto;
@@ -20,6 +21,7 @@ public class PrivateCompilationController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto addParticipationRequest(@PathVariable(name = "userId") Long userId,
                                                            @RequestParam(name = "eventId") Long eventId) {
         return service.addParticipationRequest(userId, eventId);

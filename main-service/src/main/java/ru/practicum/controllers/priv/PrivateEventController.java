@@ -42,11 +42,11 @@ public class PrivateEventController {
     }
 
     @GetMapping
-    public Page<EventShortDto> getEvents(@PathVariable(name = "userId") Long userId,
+    public List<EventShortDto> getEvents(@PathVariable(name = "userId") Long userId,
                                          @RequestParam(defaultValue = "0") int from,
                                          @RequestParam(defaultValue = "10") int size,
                                          HttpServletRequest request) {
-        Page<EventShortDto> result = service.getEvents(userId, from, size);
+        List<EventShortDto> result = service.getEvents(userId, from, size);
         HitDto hitDto = new HitDto();
         hitDto.setApp("main-service");
         hitDto.setIp(request.getRemoteAddr());
@@ -86,7 +86,13 @@ public class PrivateEventController {
     @PatchMapping("/{eventId}/requests")
     public EventRequestStatusUpdateResul changeRequestStatus(@PathVariable(name = "userId") Long userId,
                                                              @PathVariable(name = "eventId") Long eventId,
-                                                             @RequestBody EventRequestStatusUpdateRequest request) {
+                                                             @Valid @RequestBody EventRequestStatusUpdateRequest request) {
         return service.changeRequestStatus(userId, eventId, request);
     }
+//
+//    @PatchMapping("/{eventId}/requests")
+//    public EventRequestStatusUpdateResul confirmedRequest(@PathVariable(name = "userId") Long userId,
+//                                                             @PathVariable(name = "eventId") Long eventId) {
+//        return service.confirmedRequest(userId, eventId);
+//    }
 }

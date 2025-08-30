@@ -1,6 +1,5 @@
 package ru.practicum.services.event;
 
-import org.springframework.data.domain.Page;
 import ru.practicum.dto.event.*;
 import ru.practicum.dto.participationRequest.EventRequestStatusUpdateRequest;
 import ru.practicum.dto.participationRequest.EventRequestStatusUpdateResul;
@@ -12,7 +11,7 @@ import java.util.List;
 public interface EventService {
     EventFullDto addEvent(NewEventRequest request, Long userId);
 
-    Page<EventShortDto> getEvents(Long userId, int from, int size);
+    List<EventShortDto> getEvents(Long userId, int from, int size);
 
     EventFullDto getEvent(Long userId, Long eventId);
 
@@ -22,7 +21,7 @@ public interface EventService {
 
     EventRequestStatusUpdateResul changeRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest request);
 
-    Page<EventFullDto> getEvents_2(List<Long> userIds,
+    List<EventFullDto> getEvents_2(List<Long> userIds,
                                    List<String> states,
                                    List<Long> categoryIds,
                                    LocalDateTime rangeStart,
@@ -32,7 +31,7 @@ public interface EventService {
 
     EventFullDto updateEvent_1(Long eventId, UpdateEventAdminRequest request);
 
-    Page<EventShortDto> getEvents_1(String text,
+    List<EventShortDto> getEvents_1(String text,
                                     List<Long> categoryIds,
                                     boolean paid,
                                     LocalDateTime rangeStart,
@@ -50,6 +49,4 @@ public interface EventService {
     ParticipationRequestDto addParticipationRequest(Long userId, Long eventId);
 
     ParticipationRequestDto cancelRequest(Long userId, Long requestId);
-
-    EventFullDto changeViewsEvent(EventFullDto dto);
 }

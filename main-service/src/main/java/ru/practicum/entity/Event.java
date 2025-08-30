@@ -70,7 +70,7 @@ public class Event {
     private String title;
 
     @Column(name = "views")
-    private Integer views;
+    private Long views;
 
     @Override
     public boolean equals(Object o) {

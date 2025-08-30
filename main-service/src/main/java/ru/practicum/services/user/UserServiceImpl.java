@@ -7,10 +7,12 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.user.NewUserRequest;
 import ru.practicum.dto.user.UserDto;
 import ru.practicum.entity.User;
+import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.NotFoundUserException;
 import ru.practicum.mappers.UserMapper;
 import ru.practicum.repo.UserRepository;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +26,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto registerUser(NewUserRequest request) {
+        Optional<User> findUserSameEmail = userRepository.findByEmail(request.getEmail());
+        if (findUserSameEmail.isPresent()) {
+            throw new ConflictException("Пользователь с почтой " + request.getEmail() + " уже  зарегистрирован.");
+        }
+
         User user = userRepository.save(UserMapper.mapToUserFromNewRequest(request));
         return UserMapper.mapToUserDto(user);
     }
@@ -40,36 +47,43 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserDto> getUsers(List<Long> ids, int from, int size) {
-        Pageable pageable = PageRequest.of(from, size, Sort.by("id"));
-
-        if (ids != null) {
-
-            Page<User> requestsPage = userRepository.findAllByIdIn(ids, pageable);
-
-            List<UserDto> content = requestsPage.getContent().stream()
-                    .map(user -> UserMapper.mapToUserDto(user))
-                    .sorted(Comparator.comparing(UserDto::getId))
-                    .collect(Collectors.toList());
-
-            return new PageImpl<>(
-                    content,
-                    requestsPage.getPageable(),
-                    requestsPage.getTotalElements()
-            );
+    public List<UserDto> getUsers(List<Long> ids, int from, int size) {
+        List<User> findUsers = userRepository.findByParam(ids, from, size);
+        if (findUsers.isEmpty()) {
+            return Collections.emptyList();
         } else {
-            Page<User> requestsPage = userRepository.findAll(pageable);
-
-            List<UserDto> content = requestsPage.getContent().stream()
-                    .map(user -> UserMapper.mapToUserDto(user))
-                    .sorted(Comparator.comparing(UserDto::getId))
-                    .collect(Collectors.toList());
-
-            return new PageImpl<>(
-                    content,
-                    requestsPage.getPageable(),
-                    requestsPage.getTotalElements()
-            );
+            return findUsers.stream().map(u -> UserMapper.mapToUserDto(u)).toList();
         }
+
+//        Pageable pageable = PageRequest.of(from, size, Sort.by("id"));
+//
+//        if (ids != null) {
+//
+//            Page<User> requestsPage = userRepository.findAllByIdIn(ids, pageable);
+//
+//            List<UserDto> content = requestsPage.getContent().stream()
+//                    .map(user -> UserMapper.mapToUserDto(user))
+//                    .sorted(Comparator.comparing(UserDto::getId))
+//                    .collect(Collectors.toList());
+//
+//            return new PageImpl<>(
+//                    content,
+//                    requestsPage.getPageable(),
+//                    requestsPage.getTotalElements()
+//            );
+//        } else {
+//            Page<User> requestsPage = userRepository.findAll(pageable);
+//
+//            List<UserDto> content = requestsPage.getContent().stream()
+//                    .map(user -> UserMapper.mapToUserDto(user))
+//                    .sorted(Comparator.comparing(UserDto::getId))
+//                    .collect(Collectors.toList());
+//
+//            return new PageImpl<>(
+//                    content,
+//                    requestsPage.getPageable(),
+//                    requestsPage.getTotalElements()
+//            );
+//        }
     }
 }

@@ -1,5 +1,6 @@
 package ru.practicum.dto.event;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.enums.State;
@@ -22,6 +23,7 @@ public class EventFullDto {
 
     private String description;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
     private UserShortDto initiator;
@@ -40,5 +42,5 @@ public class EventFullDto {
 
     private String title;
 
-    private Integer views;
+    private Long views;
 }

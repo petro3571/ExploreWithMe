@@ -40,8 +40,8 @@ public class EventMapper {
         dto.setPaid(event.isPaid());
         dto.setParticipantLimit(event.getParticipantLimit());
         dto.setTitle(event.getTitle());
-        dto.setViews(event.getViews());
-        dto.setCreatedOn(event.getCreatedOn());//
+//        dto.setViews(event.getViews());
+        dto.setCreatedOn(event.getCreatedOn());
         dto.setDescription(event.getDescription());
         dto.setPublishedOn(event.getPublishedOn());
         dto.setRequestModeration(event.isRequestModeration());

@@ -1,5 +1,6 @@
 package ru.practicum.dto.event;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import ru.practicum.dto.enums.StateAction;
@@ -17,6 +18,7 @@ public class UpdateEventAdminRequest {
     @Size(min = 20, max = 7000, message = "Description must be between 20 and 7000 characters")
     private String description;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
     private Location location;

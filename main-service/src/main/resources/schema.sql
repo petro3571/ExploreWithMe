@@ -31,7 +31,7 @@
            published_on TIMESTAMP WITHOUT TIME ZONE,
            request_moderation BOOLEAN,
            state VARCHAR(120),
-           views INT
+           views BIGINT
          );
  CREATE TABLE IF NOT EXISTS compilations (
             id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
