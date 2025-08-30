@@ -4,6 +4,7 @@ import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
@@ -67,16 +68,31 @@ public class BaseClient {
         return makeAndSendRequest(HttpMethod.DELETE, path, parameters, null);
     }
 
-    private ResponseEntity<Object> makeAndSendRequest(HttpMethod method, String path, @Nullable Map<String, Object> parameters, @Nullable Object body) {
+    private ResponseEntity<Object> makeAndSendRequest(HttpMethod method, String path,
+                                                      @Nullable Map<String, Object> parameters,
+                                                      @Nullable Object body) {
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromPath(path);
+
+        if (parameters != null && !parameters.isEmpty()) {
+            for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+                if (entry.getValue() instanceof List) {
+                    List<?> list = (List<?>) entry.getValue();
+                    for (Object item : list) {
+                        builder.queryParam(entry.getKey(), item);
+                    }
+                } else {
+                    builder.queryParam(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+        String finalUrl = builder.encode().build().toUriString();
         HttpEntity<Object> requestEntity = new HttpEntity<>(body, defaultHeaders());
 
         ResponseEntity<Object> statsServerResponse;
         try {
-            if (parameters != null && !parameters.isEmpty()) {
-                statsServerResponse = rest.exchange(path, method, requestEntity, Object.class, parameters);
-            } else {
-                statsServerResponse = rest.exchange(path, method, requestEntity, Object.class);
-            }
+            statsServerResponse = rest.exchange(finalUrl, method, requestEntity, Object.class);
         } catch (HttpStatusCodeException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsByteArray());
         }

@@ -1,2 +1,5 @@
-FROM alpine:latest
-CMD echo "Service ewm-service is not implemented yet" && sleep 3600
+FROM eclipse-temurin:21-jre-jammy
+VOLUME /tmp
+ARG JAR_FILE=target/main-service-*.jar
+COPY ${JAR_FILE} app.jar
+ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar /app.jar"]
