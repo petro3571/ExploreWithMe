@@ -323,7 +323,7 @@ public class EventServiceImpl implements EventService {
         if (request.getStateAction().equals(StateAction.REJECT_EVENT) && findEvent.get().getState().equals(State.PUBLISHED)
                 || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && findEvent.get().getState().equals(State.PUBLISHED))
                 || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && findEvent.get().getState().equals(State.CANCELED))
-                || (request.getStateAction().equals(StateAction.REJECT_EVENT) && findEvent.get().getState().equals(State.CANCELED))){
+                || (request.getStateAction().equals(StateAction.REJECT_EVENT) && findEvent.get().getState().equals(State.CANCELED))) {
             throw new ConflictException("Событие не удовлетворяет правилам редактирования");
         }
 
@@ -562,6 +562,7 @@ public class EventServiceImpl implements EventService {
                             result.put(id, stat.getHits());
                         }
                     } catch (NumberFormatException e) {
+                        throw new Exception("sadadkslmsda");
                     }
                 }
 

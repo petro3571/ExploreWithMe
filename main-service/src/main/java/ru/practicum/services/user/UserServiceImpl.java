@@ -1,7 +1,6 @@
 package ru.practicum.services.user;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.user.NewUserRequest;
@@ -13,10 +12,8 @@ import ru.practicum.mappers.UserMapper;
 import ru.practicum.repo.UserRepository;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,36 +51,5 @@ public class UserServiceImpl implements UserService {
         } else {
             return findUsers.stream().map(u -> UserMapper.mapToUserDto(u)).toList();
         }
-
-//        Pageable pageable = PageRequest.of(from, size, Sort.by("id"));
-//
-//        if (ids != null) {
-//
-//            Page<User> requestsPage = userRepository.findAllByIdIn(ids, pageable);
-//
-//            List<UserDto> content = requestsPage.getContent().stream()
-//                    .map(user -> UserMapper.mapToUserDto(user))
-//                    .sorted(Comparator.comparing(UserDto::getId))
-//                    .collect(Collectors.toList());
-//
-//            return new PageImpl<>(
-//                    content,
-//                    requestsPage.getPageable(),
-//                    requestsPage.getTotalElements()
-//            );
-//        } else {
-//            Page<User> requestsPage = userRepository.findAll(pageable);
-//
-//            List<UserDto> content = requestsPage.getContent().stream()
-//                    .map(user -> UserMapper.mapToUserDto(user))
-//                    .sorted(Comparator.comparing(UserDto::getId))
-//                    .collect(Collectors.toList());
-//
-//            return new PageImpl<>(
-//                    content,
-//                    requestsPage.getPageable(),
-//                    requestsPage.getTotalElements()
-//            );
-//        }
     }
 }

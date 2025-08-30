@@ -1,6 +1,5 @@
 package ru.practicum.services.user;
 
-import org.springframework.data.domain.Page;
 import ru.practicum.dto.user.NewUserRequest;
 import ru.practicum.dto.user.UserDto;
 
