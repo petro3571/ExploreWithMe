@@ -409,7 +409,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (findEvent.get().getConfirmedRequests() != null) {
-            if (findEvent.get().getConfirmedRequests().equals(findEvent.get().getParticipantLimit())) {
+            if (findEvent.get().getConfirmedRequests().intValue() == (findEvent.get().getParticipantLimit())) {
                 throw new ConflictException("Integrity constraint has been violated.");
             }
         }
