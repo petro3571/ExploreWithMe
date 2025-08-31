@@ -1,7 +1,6 @@
 package ru.practicum.services.compilation;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.compilation.CompilationDto;
@@ -31,31 +30,60 @@ public class CompilationServiceImpl implements CompilationService {
     private final CompilationEventsRepo compilationEventsRepo;
 
     @Override
+    @Transactional
     public CompilationDto saveCompilation(NewCompilationDto dto) {
-        List<Long> eventIds = dto.getEvents();
+        if (dto.getTitle() != null && compilationRepository.existsByTitle(dto.getTitle())) {
+            throw new ConflictException("Подборка с названием '" + dto.getTitle() + "' уже существует");
+        }
+
         Compilation compilation = CompilationMapper.mapToCompilationFromNewRequest(dto);
 
         compilation = compilationRepository.save(compilation);
-        List<EventShortDto> listShortDto = new ArrayList<>();
 
-        for (Long id : eventIds) {
-            Optional<Event> findEvent = eventRepository.findById(id);
-            if (findEvent.isPresent()) {
-                compilationEventsRepo.save(new CompilationEvents(null, compilation, findEvent.get()));
-            } else {
-                throw new NotFoundUserException("События с id " + id + " нет");
-            }
+        List<EventShortDto> eventDtos = processCompilationEvents(compilation, dto.getEvents());
 
-            listShortDto.add(EventMapper.mapToEventShortDtoFromEvent(findEvent.get()));
+        CompilationDto result = new CompilationDto();
+        result.setId(compilation.getId());
+        result.setTitle(compilation.getTitle());
+        result.setPinned(compilation.isPinned());
+        result.setEvents(eventDtos);
+
+        return result;
+    }
+
+    private List<EventShortDto> processCompilationEvents(Compilation compilation, List<Long> eventIds) {
+        if (eventIds == null || eventIds.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        if (!listShortDto.isEmpty()) {
-            CompilationDto compilationDto = CompilationMapper.mapToCompDto(compilation);
-            compilationDto.setEvents(listShortDto);
-            return compilationDto;
-        } else {
-            throw  new ConflictException("Integrity constraint has been violated.");
+        List<Event> events = eventRepository.findAllById(eventIds);
+
+        if (events.size() != eventIds.size()) {
+            Set<Long> foundIds = events.stream()
+                    .map(Event::getId)
+                    .collect(Collectors.toSet());
+
+            List<Long> missingIds = eventIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .collect(Collectors.toList());
+
+            throw new NotFoundUserException("События с id=" + missingIds + " не найдены");
         }
+
+        List<CompilationEvents> compilationEvents = events.stream()
+                .map(event -> {
+                    CompilationEvents ce = new CompilationEvents();
+                    ce.setCompilation(compilation);
+                    ce.setEvent(event);
+                    return ce;
+                })
+                .collect(Collectors.toList());
+
+        compilationEventsRepo.saveAll(compilationEvents);
+
+        return events.stream()
+                .map(EventMapper::mapToEventShortDtoFromEvent)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -65,6 +93,7 @@ public class CompilationServiceImpl implements CompilationService {
         if (findCompilation.isEmpty()) {
             throw new NotFoundUserException("Подборки с id " + compId + "нет");
         } else {
+            compilationEventsRepo.deleteByCompilation_Id(compId);
             compilationRepository.delete(findCompilation.get());
         }
     }
@@ -80,7 +109,7 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation findcompilation = CompilationMapper.mapToCompFroUpd(compilation.get(), request);
         List<EventShortDto> listShortEventDto = compilationEventsRepo.findById(compId).stream()
                 .map(event -> EventMapper.mapToEventShortDtoFromEvent(event.getEvent())).toList();
-        if (!request.getEvents().isEmpty()) {
+        if (request.getEvents() != null) {
             for (Long id : request.getEvents()) {
                 Optional<Event> findEvent = eventRepository.findById(id);
                 if (findEvent.isPresent()) {
@@ -100,32 +129,26 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CompilationDto> getCompilations(boolean pinned, int from, int size) {
-        Pageable pageable = PageRequest.of(from, size, Sort.by("id"));
-
-        Page<Compilation> requestsPage = compilationRepository.findByPinned(pinned, pageable);
-
-        if (!requestsPage.getContent().isEmpty()) {
-            List<CompilationDto> content = requestsPage.getContent().stream()
-                    .map(compilation -> CompilationMapper.mapToCompDto(compilation))
-                    .sorted(Comparator.comparing(CompilationDto::getId))
-                    .collect(Collectors.toList());
-
-            return new PageImpl<>(
-                    content,
-                    requestsPage.getPageable(),
-                    requestsPage.getTotalElements()
-            );
+    public List<CompilationDto> getCompilations(Boolean pinned, int from, int size) {
+        if (pinned != null) {
+            List<Compilation> findCats = compilationRepository.findByPinned(pinned, from, size);
+            if (findCats.isEmpty()) {
+                return Collections.emptyList();
+            } else {
+                return findCats.stream().map(c -> CompilationMapper.mapToCompDto(c)).toList();
+            }
         } else {
-            return new PageImpl<>(
-                    Collections.emptyList(),
-                    requestsPage.getPageable(),
-                    requestsPage.getTotalElements()
-            );
+            List<Compilation> findCats = compilationRepository.findByParam(from, size);
+            if (findCats.isEmpty()) {
+                return Collections.emptyList();
+            } else {
+                return findCats.stream().map(c -> CompilationMapper.mapToCompDto(c)).toList();
+            }
         }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CompilationDto getCompilation(Long compId) {
         Optional<Compilation> findComp = compilationRepository.findById(compId);
 

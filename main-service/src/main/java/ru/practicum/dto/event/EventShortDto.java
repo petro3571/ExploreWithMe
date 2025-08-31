@@ -15,7 +15,7 @@ public class EventShortDto {
 
     private CategoryDto category;
 
-    private Integer confirmedRequests;
+    private Long confirmedRequests;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;

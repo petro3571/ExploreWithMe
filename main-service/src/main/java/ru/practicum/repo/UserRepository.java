@@ -27,4 +27,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByParam(@Param("userIds") List<Long> userIds,
                             @Param("from") int from,
                             @Param("size") int size);
+
+    @Query(value = "SELECT u.* FROM users u " +
+            "WHERE u.id > :from " +
+            "LIMIT :size",
+            nativeQuery = true)
+    List<User> findByParamFromAndSize(@Param("from") int from,
+                                      @Param("size") int size);
 }

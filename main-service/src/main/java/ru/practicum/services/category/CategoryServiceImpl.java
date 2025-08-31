@@ -1,7 +1,6 @@
 package ru.practicum.services.category;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.category.CategoryDto;
@@ -16,10 +15,8 @@ import ru.practicum.repo.CategoryRepository;
 import ru.practicum.repo.EventRepository;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +56,7 @@ public class CategoryServiceImpl implements CategoryService {
         if (category.isEmpty()) {
             throw new NotFoundUserException("Category with id = " + catId + " was not found");
         } else {
-            if (categoryRepository.findByName(request.getName()) != null) {
+            if (categoryRepository.existsByNameAndIdNot(request.getName(), category.get().getId())) {
                 throw new DuplicateCategoryException("Нарушение целостности данных, категория с именем " + request.getName() + "существует");
             } else {
                 Category findCategory = category.get();
@@ -71,29 +68,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CategoryDto> getCategories(int from, int size) {
-        Pageable pageable = PageRequest.of(from, size, Sort.by("id"));
-
-        Page<Category> requestsPage = categoryRepository.findAll(pageable);
-
-        if (!requestsPage.getContent().isEmpty()) {
-            List<CategoryDto> content = requestsPage.getContent().stream()
-                    .map(category -> CategoryMapper.mapToCategoryDto(category))
-                    .sorted(Comparator.comparing(CategoryDto::getId))
-                    .collect(Collectors.toList());
-
-            return new PageImpl<>(
-                    content,
-                    requestsPage.getPageable(),
-                    requestsPage.getTotalElements()
-            );
+    public List<CategoryDto> getCategories(int from, int size) {
+        List<Category> findCats = categoryRepository.findByParam(from, size);
+        if (findCats.isEmpty()) {
+            return Collections.emptyList();
         } else {
-
-                return new PageImpl<>(
-                        Collections.emptyList(),
-                        requestsPage.getPageable(),
-                        requestsPage.getTotalElements()
-                );
+            return findCats.stream().map(c -> CategoryMapper.mapToCategoryDto(c)).toList();
         }
     }
 

@@ -1,8 +1,9 @@
 package ru.practicum.services.category;
 
-import org.springframework.data.domain.Page;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.category.NewCategoryRequest;
+
+import java.util.List;
 
 public interface CategoryService {
 
@@ -12,7 +13,7 @@ public interface CategoryService {
 
     CategoryDto updateCategory(Long catId, NewCategoryRequest request);
 
-    Page<CategoryDto> getCategories(int from, int size);
+    List<CategoryDto> getCategories(int from, int size);
 
     CategoryDto getCategory(long catId);
 }

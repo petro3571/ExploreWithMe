@@ -145,7 +145,14 @@ public class EventServiceImpl implements EventService {
     public List<ParticipationRequestDto> getEventParticipants(Long userId, Long eventId) {
         Optional<User> findUser = findUserMethod(userId);
 
-        List<ParticipationRequest> requests = requestRepository.findByEvent_IdAndRequester_Id(eventId, userId);
+        Optional<Event> findEvent = findEventMethod(eventId);
+
+        if (!findEvent.get().getInitiator().getId().equals(userId)) {
+            throw new NotFoundUserException("Событие с id = " + eventId + " не принадлежит пользователю с id = " + userId);
+        }
+
+        // 3. Найти все запросы на участие в этом событии
+        List<ParticipationRequest> requests = requestRepository.findByEvent_Id(eventId);
 
         if (requests.isEmpty()) {
             return Collections.emptyList();
@@ -229,110 +236,77 @@ public class EventServiceImpl implements EventService {
         return new EventRequestStatusUpdateResul(confirmedList, rejectedList);
     }
 
-//    @Override
-//    public EventRequestStatusUpdateResul confirmedRequest(Long userId, Long eventId) {
-//        Optional<User> findUser = findUserMethod(userId);
-//
-//        Optional<Event> findEvent = eventRepository.findByIdAndInitiator_Id(eventId, userId);
-//        if (findEvent.isEmpty()) {
-//            throw new NotFoundUserException("Событие с id " + eventId + "нет.");
-//        }
-//
-//        if (findEvent.get().getParticipantLimit() == 0 || findEvent.get().isRequestModeration() == false) {
-//            throw new RuntimeException("Подтверждение заявок не требуется");
-//        }
-//
-//        List<ParticipationRequest> listRequests = requestRepository.findByEvent_IdAndRequester_Id(eventId, userId);
-//
-//        if (listRequests.size() >= findEvent.get().getParticipantLimit()) {
-//            throw new ConflictException("The participant limit has been reached");
-//        }
-//
-//        RequestStatus status = RequestStatus.CONFIRMED;
-//
-//        List<Long> eventRequestIds = requestRepository.findByEvent_IdAndStatusNot(eventId, status).stream()
-//                .map(request -> request.getId()).toList();
-//
-//        List<ParticipationRequestDto> list = eventRequestIds.stream()
-//                .map(id -> requestRepository.findById(id)).map(request -> {
-//                    if (request.isEmpty()) {
-//                        throw new NotFoundUserException("Такой заявки нет");
-//                    } else {
-//                        return request.get();
-//                    }
-//                }).filter(r -> r.getStatus().equals(RequestStatus.PENDING)).peek(r -> {
-//                    r.setStatus(status);
-//                    requestRepository.save(r);
-//                }).map(request1 -> RequestMapper.mapToRequestDtoFromRequest(request1)).toList();
-//
-//        if (status.equals(RequestStatus.CONFIRMED)) {
-//            return new EventRequestStatusUpdateResul(new ArrayList<>(list), Collections.emptyList());
-//        } else if (status.equals(RequestStatus.REJECTED)) {
-//            return new EventRequestStatusUpdateResul(Collections.emptyList(), new ArrayList<>(list));
-//        } else {
-//            throw new BadRequestException("Cannot update request status: " + status);
-//        }
-//    }
-
-//    @Override
-//    @Transactional(readOnly = true)
-//    public List<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
-//                                          LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
-//        Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
-//
-//        Page<Event> requestsPage = eventRepository.findByInitiator_IdInAndEventDateBetweenAndCategory_IdInAndStateIn(userIds, rangeStart, rangeEnd, categoryIds, states, pageable);
-//
-//        if (!requestsPage.getContent().isEmpty()) {
-//            List<EventFullDto> content = requestsPage.getContent().stream()
-//                    .map(event -> EventMapper.mapToFullEventDtoFormEvent(event))
-//                    .sorted(Comparator.comparing(EventFullDto::getEventDate))
-//                    .collect(Collectors.toList());
-//
-//            return new PageImpl<>(
-//                    content,
-//                    requestsPage.getPageable(),
-//                    requestsPage.getTotalElements()
-//            );
-//        } else {
-//            return new PageImpl<>(
-//                    Collections.emptyList(),
-//                    requestsPage.getPageable(),
-//                    requestsPage.getTotalElements()
-//            );
-//        }
-//    }
-
     @Override
     @Transactional(readOnly = true)
     public List<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
-
-        List<Event> result = eventRepository.findByParam(userIds, rangeStart, rangeEnd, categoryIds, states, from, size);
-
-        if (result.isEmpty()) {
-            return Collections.emptyList();
-        } else {
-            return result.stream().map(event -> EventMapper.mapToFullEventDtoFormEvent(event)).collect(Collectors.toList());
+        LocalDateTime start = LocalDateTime.now();
+        if (rangeStart != null) {
+            try {
+                start = rangeStart;
+            } catch (RuntimeException e) {
+                throw new BadRequestException("Cannot parse RangeStart");
+            }
         }
+        LocalDateTime end = LocalDateTime.now().plusYears(10);
+        if (rangeEnd != null) {
+            try {
+                end = rangeEnd;
+            } catch (RuntimeException e) {
+                throw new BadRequestException("Cannot parse RangeEnd");
+            }
+        }
+        if (!start.isBefore(end)) {
+            throw new ConflictException("RangeStart must be after RangeEnd");
+        }
+        List<String> listStates = List.of(State.PENDING.toString(),
+                State.PUBLISHED.toString(),
+                State.CANCELED.toString());
+        if (states != null) {
+            listStates = states;
+        }
+
+        List<Event> events = eventRepository.findByParam(userIds, start, end, categoryIds, listStates, from, size);
+        Map<Long, Long> views = findViewsForEvents(events);
+        return events.stream()
+                .map(event -> EventMapper.mapToFullEventDtoFormEvent(event))
+                .peek(event -> {
+                    event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
+                    event.setViews(views.get(event.getId()));
+                }).toList();
     }
 
     @Override
     public EventFullDto updateEvent_1(Long eventId, UpdateEventAdminRequest request) {
         Optional<Event> findEvent = findEventMethod(eventId);
+        Event existingEvent = findEvent.orElseThrow(() ->
+                new NotFoundUserException("Событие с id=" + eventId + " не найдено"));
 
-        if (request.getStateAction().equals(StateAction.REJECT_EVENT) && findEvent.get().getState().equals(State.PUBLISHED)
-                || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && findEvent.get().getState().equals(State.PUBLISHED))
-                || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && findEvent.get().getState().equals(State.CANCELED))
-                || (request.getStateAction().equals(StateAction.REJECT_EVENT) && findEvent.get().getState().equals(State.CANCELED))) {
+        if (request.getStateAction().equals(StateAction.REJECT_EVENT) && existingEvent.getState().equals(State.PUBLISHED)
+                || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && existingEvent.getState().equals(State.PUBLISHED))
+                || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && existingEvent.getState().equals(State.CANCELED))
+                || (request.getStateAction().equals(StateAction.REJECT_EVENT) && existingEvent.getState().equals(State.CANCELED))) {
             throw new ConflictException("Событие не удовлетворяет правилам редактирования");
         }
 
-        Event event = EventMapper.mapToEventFromUpdateEventAdmin(findEvent.get(), request);
+        Event event = EventMapper.mapToEventFromUpdateEventAdmin(existingEvent, request);
+
+        if (event.getLocation() != null && event.getLocation().getId() == null) {
+            Location savedLocation = locationRepository.save(event.getLocation());
+            event.setLocation(savedLocation);
+        }
+
         if (request.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
             event.setPublishedOn(LocalDateTime.now());
+            event.setState(State.PUBLISHED);
+        } else if (request.getStateAction().equals(StateAction.REJECT_EVENT)) {
+            event.setState(State.CANCELED);
         }
-        if (event.getEventDate().isAfter(event.getPublishedOn().plusHours(1))) {
-            return EventMapper.mapToFullEventDtoFormEvent(eventRepository.save(event));
+
+        if (event.getPublishedOn() != null &&
+                event.getEventDate().isAfter(event.getPublishedOn().plusHours(1))) {
+            Event savedEvent = eventRepository.save(event);
+            return EventMapper.mapToFullEventDtoFormEvent(savedEvent);
         } else {
             throw new RequestConditionsException("Событие не удовлетворяет правилам редактирования");
         }
@@ -447,7 +421,7 @@ public class EventServiceImpl implements EventService {
                 request.setRequester(findUser.get());
                 request.setStatus(RequestStatus.CONFIRMED);
                 request.setCreated(LocalDateTime.now());
-                findEvent.get().setConfirmedRequests(findEvent.get().getConfirmedRequests() + 1);
+                findEvent.get().setConfirmedRequests(findEvent.get().getConfirmedRequests() + 1);//
                 ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
                 eventRepository.save(findEvent.get());
 
@@ -458,7 +432,7 @@ public class EventServiceImpl implements EventService {
                 request.setRequester(findUser.get());
                 request.setStatus(RequestStatus.CONFIRMED);
                 request.setCreated(LocalDateTime.now());
-                findEvent.get().setConfirmedRequests(1);
+                findEvent.get().setConfirmedRequests(1L);
                 ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
                 eventRepository.save(findEvent.get());
 
@@ -482,7 +456,7 @@ public class EventServiceImpl implements EventService {
                 request.setRequester(findUser.get());
                 request.setStatus(RequestStatus.PENDING);
                 request.setCreated(LocalDateTime.now());
-                findEvent.get().setConfirmedRequests(1);
+                findEvent.get().setConfirmedRequests(1L);
                 ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
                 eventRepository.save(findEvent.get());
 
@@ -501,10 +475,10 @@ public class EventServiceImpl implements EventService {
         if (findRequest.isEmpty()) {
             throw new NotFoundUserException("Заявки с id " + userId + "нет.");
         }
-
-        if (findRequest.get().getRequester().equals(findUser.get())) {
-            findRequest.get().setStatus(RequestStatus.REJECTED);
-            return RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(findRequest.get()));
+        ParticipationRequest request = findRequest.get();
+        if (request.getRequester().equals(findUser.get())) {
+            request.setStatus(RequestStatus.CANCELED);
+            return RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
         } else {
             throw new ConflictException("Пользователь не является автором заявки.");
         }

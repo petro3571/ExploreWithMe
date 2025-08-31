@@ -1,12 +1,13 @@
 package ru.practicum.controllers.pub;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.StatsClient;
 import ru.practicum.dto.compilation.CompilationDto;
 import ru.practicum.services.compilation.CompilationService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/compilations", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -16,7 +17,7 @@ public class PublicCompilationController {
     private final StatsClient statsClient;
 
     @GetMapping
-    public Page<CompilationDto> getCompilations(@RequestParam(required = false) boolean pinned,
+    public List<CompilationDto> getCompilations(@RequestParam(required = false) Boolean pinned,
                                                 @RequestParam(defaultValue = "0") int from,
                                                 @RequestParam(defaultValue = "10") int size) {
         return service.getCompilations(pinned, from, size);

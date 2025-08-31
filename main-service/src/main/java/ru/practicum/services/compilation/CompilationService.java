@@ -1,9 +1,10 @@
 package ru.practicum.services.compilation;
 
-import org.springframework.data.domain.Page;
 import ru.practicum.dto.compilation.CompilationDto;
 import ru.practicum.dto.compilation.NewCompilationDto;
 import ru.practicum.dto.compilation.UpdateCompilationDto;
+
+import java.util.List;
 
 public interface CompilationService {
     CompilationDto saveCompilation(NewCompilationDto dto);
@@ -12,7 +13,7 @@ public interface CompilationService {
 
     CompilationDto updateCompilation(Long compId, UpdateCompilationDto request);
 
-    Page<CompilationDto> getCompilations(boolean pinned,
+    List<CompilationDto> getCompilations(Boolean pinned,
                                          int from,
                                          int size);
 

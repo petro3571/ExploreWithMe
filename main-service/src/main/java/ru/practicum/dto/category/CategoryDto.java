@@ -1,9 +1,11 @@
 package ru.practicum.dto.category;
 
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class CategoryDto {
     private Long id;
+    @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
     private String name;
 }

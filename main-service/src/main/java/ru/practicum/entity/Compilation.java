@@ -22,10 +22,6 @@ public class Compilation {
     @Column(name = "pinned")
     private boolean pinned;
 
-//    @ManyToOne
-//    @JoinColumn(name = "event_id")
-//    private Event event;
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

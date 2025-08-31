@@ -45,11 +45,20 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserDto> getUsers(List<Long> ids, int from, int size) {
-        List<User> findUsers = userRepository.findByParam(ids, from, size);
-        if (findUsers.isEmpty()) {
-            return Collections.emptyList();
+        if (ids != null) {
+            List<User> findUsers = userRepository.findByParam(ids, from, size);
+            if (findUsers.isEmpty()) {
+                return Collections.emptyList();
+            } else {
+                return findUsers.stream().map(u -> UserMapper.mapToUserDto(u)).toList();
+            }
         } else {
-            return findUsers.stream().map(u -> UserMapper.mapToUserDto(u)).toList();
+            List<User> findUsers = userRepository.findByParamFromAndSize(from, size);
+            if (findUsers.isEmpty()) {
+                return Collections.emptyList();
+            } else {
+                return findUsers.stream().map(u -> UserMapper.mapToUserDto(u)).toList();
+            }
         }
     }
 }

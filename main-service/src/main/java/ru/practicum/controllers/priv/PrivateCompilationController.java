@@ -27,7 +27,7 @@ public class PrivateCompilationController {
         return service.addParticipationRequest(userId, eventId);
     }
 
-    @DeleteMapping("/{requestId}/cancel")
+    @PatchMapping("/{requestId}/cancel")
     public ParticipationRequestDto cancelRequest(@PathVariable(name = "userId") Long userId,
                                                            @PathVariable(name = "requestId") Long requestId) {
         return service.cancelRequest(userId, requestId);

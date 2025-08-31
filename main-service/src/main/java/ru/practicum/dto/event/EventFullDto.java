@@ -17,7 +17,7 @@ public class EventFullDto {
 
     private CategoryDto category;
 
-    private Integer confirmedRequests;
+    private Long confirmedRequests;
 
     private LocalDateTime createdOn;
 
