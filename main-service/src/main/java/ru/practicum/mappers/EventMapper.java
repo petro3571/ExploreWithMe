@@ -123,12 +123,23 @@ public class EventMapper {
             event.setTitle(request.getTitle());
         }
 
-        if (request.getStateAction().equals(StateAction.CANCEL_REVIEW)) {
-            event.setState(State.CANCELED);
-        }
+        if (request.getStateAction() != null) {
 
-        if (request.getStateAction().equals(StateAction.SEND_TO_REVIEW)) {
-            event.setState(State.PENDING);
+            if (request.getStateAction().equals(StateAction.CANCEL_REVIEW)) {
+                event.setState(State.CANCELED);
+            }
+
+            if (request.getStateAction().equals(StateAction.SEND_TO_REVIEW)) {
+                event.setState(State.PENDING);
+            }
+
+            if (request.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
+                event.setState(State.PUBLISHED);
+            }
+
+            if (request.getStateAction().equals(StateAction.REJECT_EVENT)) {
+                event.setState(State.CANCELED);
+            }
         }
 
         if (request.getLocation() != null) {
@@ -156,8 +167,11 @@ public class EventMapper {
             event.setEventDate(request.getEventDate());
         }
 
-        if (event.isPaid() == false && request.isPaid() == true) {
-            event.setPaid(request.isPaid());
+//        if (event.isPaid() == false && request.isPaid() == true) {
+//            event.setPaid(request.isPaid());
+//        }
+        if (request.isPaid()) {
+            event.setPaid(true);
         }
 
         if (!(request.getParticipantLimit() == null)) {
@@ -172,20 +186,23 @@ public class EventMapper {
             event.setTitle(request.getTitle());
         }
 
-        if (request.getStateAction().equals(StateAction.CANCEL_REVIEW)) {
-            event.setState(State.CANCELED);
-        }
+        if (request.getStateAction() != null) {
 
-        if (request.getStateAction().equals(StateAction.SEND_TO_REVIEW)) {
-            event.setState(State.PENDING);
-        }
+            if (request.getStateAction().equals(StateAction.CANCEL_REVIEW)) {
+                event.setState(State.CANCELED);
+            }
 
-        if (request.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
-            event.setState(State.PUBLISHED);
-        }
+            if (request.getStateAction().equals(StateAction.SEND_TO_REVIEW)) {
+                event.setState(State.PENDING);
+            }
 
-        if (request.getStateAction().equals(StateAction.REJECT_EVENT)) {
-            event.setState(State.CANCELED);
+            if (request.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
+                event.setState(State.PUBLISHED);
+            }
+
+            if (request.getStateAction().equals(StateAction.REJECT_EVENT)) {
+                event.setState(State.CANCELED);
+            }
         }
 
         if (request.getLocation() != null) {

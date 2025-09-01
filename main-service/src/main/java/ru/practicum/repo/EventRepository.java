@@ -60,7 +60,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("size") int size);
 
     @Query(value = "SELECT e.* FROM events e " +
-            "WHERE e.event_date > :now " +
+            "WHERE e.event_date >= :now " +
             "AND e.id > :from " +
             "AND (:categoryIds IS NULL OR e.category_id IN :categoryIds) " +
             "AND (:paid IS NULL OR e.paid = :paid) " +

@@ -11,7 +11,7 @@ public class LocationMapper {
         return location;
     }
 
-    public static LocationDto mapToUserDto(Location location) {
+    public static LocationDto mapToLocaDto(Location location) {
         LocationDto dto = new LocationDto();
         dto.setLat(location.getLat());
         dto.setLon(location.getLon());

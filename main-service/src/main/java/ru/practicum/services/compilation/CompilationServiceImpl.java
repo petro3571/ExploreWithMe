@@ -107,8 +107,8 @@ public class CompilationServiceImpl implements CompilationService {
         }
 
         Compilation findcompilation = CompilationMapper.mapToCompFroUpd(compilation.get(), request);
-        List<EventShortDto> listShortEventDto = compilationEventsRepo.findById(compId).stream()
-                .map(event -> EventMapper.mapToEventShortDtoFromEvent(event.getEvent())).toList();
+        List<EventShortDto> listShortEventDto = new ArrayList<>(compilationEventsRepo.findById(compId).stream()
+                .map(event -> EventMapper.mapToEventShortDtoFromEvent(event.getEvent())).toList());
         if (request.getEvents() != null) {
             for (Long id : request.getEvents()) {
                 Optional<Event> findEvent = eventRepository.findById(id);
@@ -131,18 +131,28 @@ public class CompilationServiceImpl implements CompilationService {
     @Transactional(readOnly = true)
     public List<CompilationDto> getCompilations(Boolean pinned, int from, int size) {
         if (pinned != null) {
-            List<Compilation> findCats = compilationRepository.findByPinned(pinned, from, size);
-            if (findCats.isEmpty()) {
+            List<Compilation> findComps = compilationRepository.findByPinned(pinned, from, size);
+            if (findComps.isEmpty()) {
                 return Collections.emptyList();
             } else {
-                return findCats.stream().map(c -> CompilationMapper.mapToCompDto(c)).toList();
+                List<CompilationDto> result = findComps.stream().map(c -> CompilationMapper.mapToCompDto(c)).toList();
+                return result.stream().peek(dto -> {
+                    List<EventShortDto> listShortDto = compilationEventsRepo.findByCompilation_Id(dto.getId()).stream()
+                        .map(comp -> EventMapper.mapToEventShortDtoFromEvent(comp.getEvent())).toList();
+
+                    dto.setEvents(listShortDto);}).toList();
             }
         } else {
-            List<Compilation> findCats = compilationRepository.findByParam(from, size);
-            if (findCats.isEmpty()) {
+            List<Compilation> findComps = compilationRepository.findByParam(from, size);
+            if (findComps.isEmpty()) {
                 return Collections.emptyList();
             } else {
-                return findCats.stream().map(c -> CompilationMapper.mapToCompDto(c)).toList();
+                List<CompilationDto> result = findComps.stream().map(c -> CompilationMapper.mapToCompDto(c)).toList();
+                return result.stream().peek(dto -> {
+                    List<EventShortDto> listShortDto = compilationEventsRepo.findByCompilation_Id(dto.getId()).stream()
+                            .map(comp -> EventMapper.mapToEventShortDtoFromEvent(comp.getEvent())).toList();
+
+                    dto.setEvents(listShortDto);}).toList();
             }
         }
     }

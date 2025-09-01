@@ -1,7 +1,6 @@
 package ru.practicum.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -28,15 +27,15 @@ public class NewEventRequest {
 
     private LocationDto location;
 
-    @JsonProperty(defaultValue = "false")
-    private boolean paid;
+//    @JsonProperty(defaultValue = "false")
+    private boolean paid = false;
 
     @PositiveOrZero
-    @JsonProperty(defaultValue = "0")
-    private Integer participantLimit;
+//    @JsonProperty(defaultValue = "0")
+    private Integer participantLimit = 0;
 
-    @JsonProperty(defaultValue = "true")
-    private boolean requestModeration;
+//    @JsonProperty(defaultValue = "true")
+    private boolean requestModeration = true;
 
     @NotBlank
     @Size(min = 3, max = 120, message = "Title must be between 3 and 120 characters")

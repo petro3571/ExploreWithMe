@@ -1,5 +1,6 @@
 package ru.practicum.services.event;
 
+import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.dto.event.*;
 import ru.practicum.dto.participationRequest.EventRequestStatusUpdateRequest;
 import ru.practicum.dto.participationRequest.EventRequestStatusUpdateResul;
@@ -27,7 +28,7 @@ public interface EventService {
                                    LocalDateTime rangeStart,
                                    LocalDateTime rangeEnd,
                                    int from,
-                                   int size);
+                                   int size, HttpServletRequest request);
 
     EventFullDto updateEvent_1(Long eventId, UpdateEventAdminRequest request);
 
@@ -39,7 +40,7 @@ public interface EventService {
                                     boolean onlyAvailable,
                                     String sort,
                                     int from,
-                                    int size
+                                    int size, HttpServletRequest request
     );
 
     EventFullDto getEvent_1(Long eventId);

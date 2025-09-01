@@ -1,10 +1,13 @@
 package ru.practicum.services.event;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.HitDto;
 import ru.practicum.StatsClient;
 import ru.practicum.ViewStatsDto;
 import ru.practicum.dto.enums.RequestStatus;
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class EventServiceImpl implements EventService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final UserRepository userRepository;
@@ -71,7 +75,6 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<EventShortDto> getEvents(Long userId, int from, int size) {
         Optional<User> findUser = findUserMethod(userId);
-
 
         List<Event> result = eventRepository.findByParamForUser(userId, from, size);
 
@@ -164,7 +167,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventRequestStatusUpdateResul changeRequestStatus(Long userId, Long eventId,
-                                                              EventRequestStatusUpdateRequest eventRequest) {
+                                                             EventRequestStatusUpdateRequest eventRequest) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundUserException("Пользователь с id " + userId + " не найден"));
@@ -239,7 +242,24 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public List<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
-                                          LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
+                                          LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size, HttpServletRequest request) {
+        HitDto hitDto = new HitDto();
+        hitDto.setApp("main-service");
+        hitDto.setIp(request.getRemoteAddr());
+        hitDto.setUri(request.getRequestURI());
+        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+        statsClient.postHit(hitDto);
+
+        List<Long> users = eventRepository.findAll().stream().map(event -> event.getInitiator().getId()).toList();
+        if (userIds != null) {
+            users = userIds;
+        }
+
+        List<Long> categories = categoryRepository.findAll().stream().map(category -> category.getId()).toList();
+        if (categoryIds != null) {
+            categories = categoryIds;
+        }
+
         LocalDateTime start = LocalDateTime.now();
         if (rangeStart != null) {
             try {
@@ -259,15 +279,16 @@ public class EventServiceImpl implements EventService {
         if (!start.isBefore(end)) {
             throw new ConflictException("RangeStart must be after RangeEnd");
         }
-        List<String> listStates = List.of(State.PENDING.toString(),
-                State.PUBLISHED.toString(),
-                State.CANCELED.toString());
+        List<String> listStates = new ArrayList<>();
+        listStates.add(State.PENDING.toString());
+        listStates.add(State.PUBLISHED.toString());
+        listStates.add( State.CANCELED.toString());
         if (states != null) {
             listStates = states;
         }
 
-        List<Event> events = eventRepository.findByParam(userIds, start, end, categoryIds, listStates, from, size);
-        Map<Long, Long> views = findViewsForEvents(events);
+        List<Event> events = new ArrayList<>(eventRepository.findByParam(users, start, end, categories, listStates, from, size));
+        Map<Long, Long> views = new HashMap<>(findViewsForEvents(events));
         return events.stream()
                 .map(event -> EventMapper.mapToFullEventDtoFormEvent(event))
                 .peek(event -> {
@@ -282,11 +303,14 @@ public class EventServiceImpl implements EventService {
         Event existingEvent = findEvent.orElseThrow(() ->
                 new NotFoundUserException("Событие с id=" + eventId + " не найдено"));
 
-        if (request.getStateAction().equals(StateAction.REJECT_EVENT) && existingEvent.getState().equals(State.PUBLISHED)
-                || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && existingEvent.getState().equals(State.PUBLISHED))
-                || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && existingEvent.getState().equals(State.CANCELED))
-                || (request.getStateAction().equals(StateAction.REJECT_EVENT) && existingEvent.getState().equals(State.CANCELED))) {
-            throw new ConflictException("Событие не удовлетворяет правилам редактирования");
+
+        if (request.getStateAction() != null) {
+            if (request.getStateAction().equals(StateAction.REJECT_EVENT) && existingEvent.getState().equals(State.PUBLISHED)
+                    || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && existingEvent.getState().equals(State.PUBLISHED))
+                    || (request.getStateAction().equals(StateAction.PUBLISH_EVENT) && existingEvent.getState().equals(State.CANCELED))
+                    || (request.getStateAction().equals(StateAction.REJECT_EVENT) && existingEvent.getState().equals(State.CANCELED))) {
+                throw new ConflictException("Событие не удовлетворяет правилам редактирования");
+            }
         }
 
         Event event = EventMapper.mapToEventFromUpdateEventAdmin(existingEvent, request);
@@ -296,11 +320,18 @@ public class EventServiceImpl implements EventService {
             event.setLocation(savedLocation);
         }
 
-        if (request.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
-            event.setPublishedOn(LocalDateTime.now());
-            event.setState(State.PUBLISHED);
-        } else if (request.getStateAction().equals(StateAction.REJECT_EVENT)) {
-            event.setState(State.CANCELED);
+        if (request.getStateAction() != null) {
+            if (request.getStateAction().equals(StateAction.PUBLISH_EVENT)) {
+                event.setPublishedOn(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+                event.setState(State.PUBLISHED);
+            } else if (request.getStateAction().equals(StateAction.REJECT_EVENT)) {
+                event.setState(State.CANCELED);
+                return EventMapper.mapToFullEventDtoFormEvent(event);
+            } else {
+                throw new BadRequestException("Forbidden Admin State Action value: " + request.getStateAction());
+            }
+        } else {
+                return EventMapper.mapToFullEventDtoFormEvent(eventRepository.save(event));
         }
 
         if (event.getPublishedOn() != null &&
@@ -315,49 +346,111 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public List<EventShortDto> getEvents_1(String text, List<Long> categoryIds, boolean paid, LocalDateTime rangeStart,
-                                           LocalDateTime rangeEnd, boolean onlyAvailable, String sort, int from, int size) {
+                                           LocalDateTime rangeEnd, boolean onlyAvailable, String sort, int from, int size,
+                                           HttpServletRequest request) {
+        HitDto hitDto = new HitDto();
+        hitDto.setApp("main-service");
+        hitDto.setIp(request.getRemoteAddr());
+        hitDto.setUri(request.getRequestURI());
+        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+        statsClient.postHit(hitDto);
+
         if (sort.equals(RuleSort.EVENT_DATE.toString())) {
-            if (rangeStart == null && rangeEnd == null) {
-                List<Event> result = eventRepository.findByParamWhenDatePresAndSortEventDate(text, categoryIds, paid,
-                        rangeStart, rangeEnd, from, size);
+            if (rangeStart != null && rangeEnd != null) {
+                if (rangeEnd.isBefore(rangeStart)) {
+                    throw new BadRequestException("Bad request of dates");
+                }
+                List<Event> result = new ArrayList<>(eventRepository.findByParamWhenDatePresAndSortEventDate(text, categoryIds, paid,
+                        rangeStart, rangeEnd, from, size));
 
                 if (result.isEmpty()) {
                     return Collections.emptyList();
                 } else {
-                    return result.stream().map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
-                            .collect(Collectors.toList());
+                    Map<Long, Long> views = new HashMap<>(findViewsForEvents(result));
+                    List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
+                                event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
+                                event.setViews(views.get(event.getId()));
+                            })
+                            .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
+                            .collect(Collectors.toList()));
+
+                    if (onlyAvailable) {
+                        newResult = newResult.stream()
+                                .filter(event -> event.getParticipantLimit() > event.getConfirmedRequests()).toList();
+                    }
+                    return newResult;
                 }
             } else {
-                List<Event> result = eventRepository.findByAfterNowEventDateSort(text, categoryIds, paid,
-                        LocalDateTime.now(), from, size);
+                List<Event> result = new ArrayList<>(eventRepository.findByAfterNowEventDateSort(text, categoryIds, paid,
+                        LocalDateTime.now(), from, size));
 
                 if (result.isEmpty()) {
                     return Collections.emptyList();
                 } else {
-                    return result.stream().map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
-                            .collect(Collectors.toList());
+                    Map<Long, Long> views = new HashMap<>(findViewsForEvents(result));
+                    List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
+                                event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
+                                event.setViews(views.get(event.getId()));
+                            })
+                            .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
+                            .collect(Collectors.toList()));
+
+                    if (onlyAvailable) {
+                        newResult = newResult.stream()
+                                .filter(event -> event.getParticipantLimit() > event.getConfirmedRequests()).toList();
+                    }
+                    return newResult;
                 }
             }
         } else if (sort.equals(RuleSort.VIEWS.toString())) {
-            if (rangeStart == null && rangeEnd == null) {
-                List<Event> result = eventRepository.findByParamWhenDatePresAndSortViews(text, categoryIds, paid,
-                        rangeStart, rangeEnd, from, size);
+            if (rangeStart != null && rangeEnd != null) {
+                if (rangeEnd.isBefore(rangeStart)) {
+                    throw new BadRequestException("Bad request of dates");
+                }
+                List<Event> result = new ArrayList<>(eventRepository.findByParamWhenDatePresAndSortViews(text, categoryIds, paid,
+                        rangeStart, rangeEnd, from, size));
 
                 if (result.isEmpty()) {
                     return Collections.emptyList();
                 } else {
-                    return result.stream().map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
-                            .collect(Collectors.toList());
+                    Map<Long, Long> views = new HashMap<>(findViewsForEvents(result));
+                    List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
+                                event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
+                                event.setViews(views.get(event.getId()));
+                            })
+                            .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
+                            .collect(Collectors.toList()));
+
+                    if (onlyAvailable) {
+                        newResult = newResult.stream()
+                                .filter(event -> event.getParticipantLimit() > event.getConfirmedRequests()).toList();
+                    }
+                    return newResult;
                 }
             } else {
-                List<Event> result = eventRepository.findByAfterNowViewsSort(text, categoryIds, paid,
-                        LocalDateTime.now(), from, size);
+                List<Event> result = new ArrayList<>(eventRepository.findByAfterNowViewsSort(text, categoryIds, paid,
+                        LocalDateTime.now(), from, size));
+
+                if (onlyAvailable) {
+                    result = result.stream()
+                            .filter(event -> event.getParticipantLimit() > event.getConfirmedRequests()).toList();
+                }
 
                 if (result.isEmpty()) {
                     return Collections.emptyList();
                 } else {
-                    return result.stream().map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
-                            .collect(Collectors.toList());
+                    Map<Long, Long> views = new HashMap<>(findViewsForEvents(result));
+                    List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
+                                event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
+                                event.setViews(views.get(event.getId()));
+                            })
+                            .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
+                            .collect(Collectors.toList()));
+                    if (onlyAvailable) {
+                        newResult = newResult.stream()
+                                .filter(event -> event.getParticipantLimit() > event.getConfirmedRequests()).toList();
+                    }
+                    return newResult;
                 }
             }
         } else {
@@ -395,76 +488,164 @@ public class EventServiceImpl implements EventService {
         }
     }
 
+//    @Override
+//    public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
+//        Optional<User> findUser = findUserMethod(userId);
+//
+//        Optional<Event> findEvent = findEventMethod(eventId);
+//
+//        List<ParticipationRequest> findRequests = requestRepository.findByEvent_IdAndRequester_Id(eventId, userId);
+//
+//        if (!findRequests.isEmpty() || findEvent.get().getInitiator().equals(findUser.get())
+//                || findEvent.get().getState().equals(State.PENDING) || findEvent.get().getState().equals(State.CANCELED)) {
+//            throw new ConflictException("Integrity constraint has been violated.");
+//        }
+//
+//        if (findEvent.get().getConfirmedRequests() != null) {
+//            if (findEvent.get().getConfirmedRequests().intValue() == findEvent.get().getParticipantLimit()) {
+//                throw new ConflictException("Integrity constraint has been violated.");
+//            }
+//        }
+//
+//        if (!findEvent.get().isRequestModeration()) {
+//            if (findEvent.get().getConfirmedRequests() != null) {
+//                ParticipationRequest request = new ParticipationRequest();
+//                request.setEvent(findEvent.get());
+//                request.setRequester(findUser.get());
+//                request.setStatus(RequestStatus.CONFIRMED);
+//                request.setCreated(LocalDateTime.now());
+//                findEvent.get().setConfirmedRequests(findEvent.get().getConfirmedRequests() + 1);//
+//                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
+//                eventRepository.save(findEvent.get());
+//
+//                return dto;
+//            } else {
+//                ParticipationRequest request = new ParticipationRequest();
+//                request.setEvent(findEvent.get());
+//                request.setRequester(findUser.get());
+//                request.setStatus(RequestStatus.CONFIRMED);
+//                request.setCreated(LocalDateTime.now());
+//                findEvent.get().setConfirmedRequests(1L);
+//                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
+//                eventRepository.save(findEvent.get());
+//
+//                return dto;
+//            }
+//        } else if (findEvent.get().isRequestModeration() || findEvent.get().getParticipantLimit() == 0 /*|| findEvent.get().getConfirmedRequests() < findEvent.get().getParticipantLimit()*/) {
+//            if (findEvent.get().getConfirmedRequests() != null) {
+//                ParticipationRequest request = new ParticipationRequest();
+//                request.setEvent(findEvent.get());
+//                request.setRequester(findUser.get());
+//                request.setStatus(RequestStatus.CONFIRMED);
+//                request.setCreated(LocalDateTime.now());
+//                findEvent.get().setConfirmedRequests(findEvent.get().getConfirmedRequests() + 1);
+//                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
+//                eventRepository.save(findEvent.get());
+//
+//                return dto;
+//            } else {
+//                ParticipationRequest request = new ParticipationRequest();
+//                request.setEvent(findEvent.get());
+//                request.setRequester(findUser.get());
+//                request.setStatus(RequestStatus.CONFIRMED);
+//                request.setCreated(LocalDateTime.now());
+//                findEvent.get().setConfirmedRequests(1L);
+//                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
+//                eventRepository.save(findEvent.get());
+//
+//                return dto;
+//            }
+//        } else {
+//            throw new ConflictException("Integrity constraint has been violated.");
+//        }
+//    }
+
+//    @Override
+//    @Transactional
+//    public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
+//        // 1. Проверяем существование пользователя и события
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new NotFoundUserException("User with id=" + userId + " was not found"));
+//
+//        Event event = eventRepository.findById(eventId)
+//                .orElseThrow(() -> new NotFoundUserException("Event with id=" + eventId + " was not found"));
+//
+//        // 2. Проверяем условия для конфликта
+//        if (requestRepository.existsByEventIdAndRequesterId(eventId, userId)) {
+//            throw new ConflictException("Cannot add duplicate participation request");
+//        }
+
+//        if (event.getInitiator().getId().equals(userId)) {
+//            throw new ConflictException("Initiator cannot participate in their own event");
+//        }
+//
+//        if (!event.getState().equals(State.PUBLISHED)) {
+//            throw new ConflictException("Cannot participate in unpublished event");
+//        }
+//
+//        if (event.getParticipantLimit() > 0 &&
+//                event.getConfirmedRequests() >= event.getParticipantLimit()) {
+//            throw new ConflictException("Event participant limit reached");
+//        }
+//
+//        // 3. Создаем запрос
+//        ParticipationRequest request = new ParticipationRequest();
+//        request.setEvent(event);
+//        request.setRequester(user);
+//        request.setCreated(LocalDateTime.now());
+//
+//        // 4. Определяем статус запроса
+//        if (!event.isRequestModeration() || event.getParticipantLimit() == 0) {
+//            // Автоматическое подтверждение
+//            request.setStatus(RequestStatus.CONFIRMED);
+//            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+//            eventRepository.save(event); // сохраняем обновленный счетчик
+//        } else {
+//            // Ожидание модерации
+//            request.setStatus(RequestStatus.PENDING);
+//        }
+//
+//        // 5. Сохраняем запрос
+//        ParticipationRequest savedRequest = requestRepository.save(request);
+//
+//        return RequestMapper.mapToRequestDtoFromRequest(savedRequest);
+//    }
+
     @Override
+    @Transactional
     public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
-        Optional<User> findUser = findUserMethod(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundUserException("User with id=" + userId + " was not found"));
 
-        Optional<Event> findEvent = findEventMethod(eventId);
-
-        List<ParticipationRequest> findRequests = requestRepository.findByEvent_IdAndRequester_Id(eventId, userId);
-
-        if (!findRequests.isEmpty() || findEvent.get().getInitiator().equals(findUser.get())
-                || findEvent.get().getState().equals(State.PENDING) || findEvent.get().getState().equals(State.CANCELED)) {
-            throw new ConflictException("Integrity constraint has been violated.");
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundUserException("Event with id=" + eventId + " was not found"));
+        if (requestRepository.existsByEventIdAndRequesterId(eventId, userId)) {
+            throw new ConflictException("Cannot add duplicate participation request");
         }
 
-        if (findEvent.get().getConfirmedRequests() != null) {
-            if (findEvent.get().getConfirmedRequests().intValue() == (findEvent.get().getParticipantLimit())) {
-                throw new ConflictException("Integrity constraint has been violated.");
-            }
+        if (event.getInitiator().getId().equals(user.getId())) {
+            throw new ConflictException("Initiator cannot request his own event");
         }
-
-        if (!findEvent.get().isRequestModeration()) {
-            if (findEvent.get().getConfirmedRequests() != null) {
-                ParticipationRequest request = new ParticipationRequest();
-                request.setEvent(findEvent.get());
-                request.setRequester(findUser.get());
-                request.setStatus(RequestStatus.CONFIRMED);
-                request.setCreated(LocalDateTime.now());
-                findEvent.get().setConfirmedRequests(findEvent.get().getConfirmedRequests() + 1);//
-                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-                eventRepository.save(findEvent.get());
-
-                return dto;
-            } else {
-                ParticipationRequest request = new ParticipationRequest();
-                request.setEvent(findEvent.get());
-                request.setRequester(findUser.get());
-                request.setStatus(RequestStatus.CONFIRMED);
-                request.setCreated(LocalDateTime.now());
-                findEvent.get().setConfirmedRequests(1L);
-                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-                eventRepository.save(findEvent.get());
-
-                return dto;
-            }
-        } else if (findEvent.get().isRequestModeration() || findEvent.get().getParticipantLimit() == 0 /*|| findEvent.get().getConfirmedRequests() < findEvent.get().getParticipantLimit()*/) {
-            if (findEvent.get().getConfirmedRequests() != null) {
-                ParticipationRequest request = new ParticipationRequest();
-                request.setEvent(findEvent.get());
-                request.setRequester(findUser.get());
-                request.setStatus(RequestStatus.PENDING);
-                request.setCreated(LocalDateTime.now());
-                findEvent.get().setConfirmedRequests(findEvent.get().getConfirmedRequests() + 1);
-                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-                eventRepository.save(findEvent.get());
-
-                return dto;
-            } else {
-                ParticipationRequest request = new ParticipationRequest();
-                request.setEvent(findEvent.get());
-                request.setRequester(findUser.get());
-                request.setStatus(RequestStatus.PENDING);
-                request.setCreated(LocalDateTime.now());
-                findEvent.get().setConfirmedRequests(1L);
-                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-                eventRepository.save(findEvent.get());
-
-                return dto;
-            }
+        if (!(event.getState().equals(State.PUBLISHED))) {
+            throw new ConflictException("This event is not published");
+        }
+        if (event.getParticipantLimit() > 0
+                && (long) event.getParticipantLimit() == requestRepository.countConfirmedRequestsForEvent(eventId)) {
+            throw new ConflictException("Participant Limit was reached");
+        }
+        ParticipationRequest request = new ParticipationRequest();
+        request.setCreated(LocalDateTime.now());
+        request.setEvent(event);
+        request.setRequester(user);
+        if (event.isRequestModeration()) {
+            request.setStatus(RequestStatus.PENDING);
         } else {
-            throw new ConflictException("Integrity constraint has been violated.");
+            request.setStatus(RequestStatus.CONFIRMED);
         }
+        if (event.getParticipantLimit() == 0) {
+            request.setStatus(RequestStatus.CONFIRMED);
+        }
+        return RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
     }
 
     @Override

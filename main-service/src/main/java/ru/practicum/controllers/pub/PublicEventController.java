@@ -31,20 +31,13 @@ public class PublicEventController {
                                               @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
                                            @RequestParam(required = false)
                                               @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-                                           @RequestParam(required = false) boolean onlyAvailable,
+                                           @RequestParam(defaultValue = "false") boolean onlyAvailable,
                                            @RequestParam(defaultValue = "EVENT_DATE") String sort,
                                           @RequestParam(defaultValue = "0") int from,
                                            @RequestParam(defaultValue = "10") int size, HttpServletRequest request
                                           ) {
         List<EventShortDto> result = service.getEvents_1(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
-                sort, from, size);
-
-        HitDto hitDto = new HitDto();
-        hitDto.setApp("main-service");
-        hitDto.setIp(request.getRemoteAddr());
-        hitDto.setUri(request.getRequestURI());
-        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
-        statsClient.postHit(hitDto);
+                sort, from, size, request);
         return result;
     }
 
