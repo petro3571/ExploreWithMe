@@ -282,7 +282,7 @@ public class EventServiceImpl implements EventService {
         List<String> listStates = new ArrayList<>();
         listStates.add(State.PENDING.toString());
         listStates.add(State.PUBLISHED.toString());
-        listStates.add( State.CANCELED.toString());
+        listStates.add(State.CANCELED.toString());
         if (states != null) {
             listStates = states;
         }

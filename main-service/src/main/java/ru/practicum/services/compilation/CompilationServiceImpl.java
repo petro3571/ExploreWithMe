@@ -139,8 +139,8 @@ public class CompilationServiceImpl implements CompilationService {
                 return result.stream().peek(dto -> {
                     List<EventShortDto> listShortDto = compilationEventsRepo.findByCompilation_Id(dto.getId()).stream()
                         .map(comp -> EventMapper.mapToEventShortDtoFromEvent(comp.getEvent())).toList();
-
-                    dto.setEvents(listShortDto);}).toList();
+                    dto.setEvents(listShortDto);
+                }).toList();
             }
         } else {
             List<Compilation> findComps = compilationRepository.findByParam(from, size);
