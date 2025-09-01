@@ -10,11 +10,4 @@ public class LocationMapper {
         location.setLon(dto.getLon());
         return location;
     }
-
-    public static LocationDto mapToLocaDto(Location location) {
-        LocationDto dto = new LocationDto();
-        dto.setLat(location.getLat());
-        dto.setLon(location.getLon());
-        return dto;
-    }
 }

@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.HitDto;
 import ru.practicum.StatsClient;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
@@ -17,7 +16,6 @@ import ru.practicum.dto.participationRequest.EventRequestStatusUpdateResul;
 import ru.practicum.dto.participationRequest.ParticipationRequestDto;
 import ru.practicum.services.event.EventService;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -45,13 +43,7 @@ public class PrivateEventController {
                                          @RequestParam(defaultValue = "0") int from,
                                          @RequestParam(defaultValue = "10") int size,
                                          HttpServletRequest request) {
-        List<EventShortDto> result = service.getEvents(userId, from, size);
-        HitDto hitDto = new HitDto();
-        hitDto.setApp("main-service");
-        hitDto.setIp(request.getRemoteAddr());
-        hitDto.setUri(request.getRequestURI());
-        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
-        statsClient.postHit(hitDto);
+        List<EventShortDto> result = service.getEvents(userId, from, size, request);
         return result;
     }
 
@@ -59,13 +51,7 @@ public class PrivateEventController {
     public EventFullDto getEvent(@PathVariable(name = "userId") Long userId,
                                  @PathVariable(name = "eventId") Long eventId,
                                  HttpServletRequest request) {
-        EventFullDto result = service.getEvent(userId, eventId);
-        HitDto hitDto = new HitDto();
-        hitDto.setApp("main-service");
-        hitDto.setIp(request.getRemoteAddr());
-        hitDto.setUri(request.getRequestURI());
-        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
-        statsClient.postHit(hitDto);
+        EventFullDto result = service.getEvent(userId, eventId, request);
         return result;
     }
 
@@ -88,10 +74,4 @@ public class PrivateEventController {
                                                              @Valid @RequestBody EventRequestStatusUpdateRequest request) {
         return service.changeRequestStatus(userId, eventId, request);
     }
-//
-//    @PatchMapping("/{eventId}/requests")
-//    public EventRequestStatusUpdateResul confirmedRequest(@PathVariable(name = "userId") Long userId,
-//                                                             @PathVariable(name = "eventId") Long eventId) {
-//        return service.confirmedRequest(userId, eventId);
-//    }
 }

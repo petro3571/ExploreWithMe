@@ -7,27 +7,6 @@ import ru.practicum.entity.Event;
 import ru.practicum.entity.Location;
 
 public class EventMapper {
-    public static Event mapToEventFromFullDto(EventFullDto dto) {
-        Event event = new Event();
-        event.setId(dto.getId());
-        event.setAnnotation(dto.getAnnotation());
-        event.setCategory(CategoryMapper.mapToCategory(dto.getCategory()));
-        event.setConfirmedRequests(dto.getConfirmedRequests());
-        event.setEventDate(dto.getEventDate());
-        event.setInitiator(UserMapper.mapToUserFromShortDto(dto.getInitiator()));
-        event.setPaid(dto.isPaid());
-        event.setParticipantLimit(dto.getParticipantLimit());
-        event.setTitle(dto.getTitle());
-        event.setViews(dto.getViews());
-        event.setCreatedOn(dto.getCreatedOn());
-        event.setDescription(dto.getDescription());
-        event.setPublishedOn(dto.getPublishedOn());
-        event.setRequestModeration(dto.isRequestModeration());
-        event.setState(dto.getState());
-
-        return event;
-    }
-
     public static EventFullDto mapToFullEventDtoFormEvent(Event event) {
         EventFullDto dto = new EventFullDto();
         dto.setId(event.getId());
@@ -59,21 +38,6 @@ public class EventMapper {
         event.setRequestModeration(newEventRequest.isRequestModeration());
         event.setTitle(newEventRequest.getTitle());
         event.setState(newEventRequest.getState());
-        return event;
-    }
-
-    public static Event mapToEventFromShortDto(EventShortDto dto) {
-        Event event = new Event();
-        event.setId(dto.getId());
-        event.setAnnotation(dto.getAnnotation());
-        event.setCategory(CategoryMapper.mapToCategory(dto.getCategory()));
-        event.setConfirmedRequests(dto.getConfirmedRequests());
-        event.setEventDate(dto.getEventDate());
-        event.setInitiator(UserMapper.mapToUserFromShortDto(dto.getInitiator()));
-        event.setPaid(dto.isPaid());
-        event.setParticipantLimit(dto.getParticipantLimit());
-        event.setTitle(dto.getTitle());
-        event.setViews(dto.getViews());
         return event;
     }
 

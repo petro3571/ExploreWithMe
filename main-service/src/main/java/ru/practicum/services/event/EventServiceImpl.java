@@ -73,7 +73,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventShortDto> getEvents(Long userId, int from, int size) {
+    public List<EventShortDto> getEvents(Long userId, int from, int size, HttpServletRequest request) {
         Optional<User> findUser = findUserMethod(userId);
 
         List<Event> result = eventRepository.findByParamForUser(userId, from, size);
@@ -81,42 +81,39 @@ public class EventServiceImpl implements EventService {
         if (result.isEmpty()) {
             return Collections.emptyList();
         } else {
-            return result.stream().map(event -> EventMapper.mapToEventShortDtoFromEvent(event)).collect(Collectors.toList());
+            return result.stream().peek(event -> {
+                HitDto hitDto = new HitDto();
+                hitDto.setApp("main-service");
+                hitDto.setIp(request.getRemoteAddr());
+                hitDto.setUri(request.getRequestURI() + "/" + event.getId());
+                hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+                statsClient.postHit(hitDto);
+
+                event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
+                event.setViews(findViewsForEvents("/users/" + userId + "/events/", List.of(event)).get(event.getId()));
+            }).map(event -> EventMapper.mapToEventShortDtoFromEvent(event)).collect(Collectors.toList());
         }
-
-//        Pageable pageable = PageRequest.of(from, size, Sort.by("eventDate"));
-
-//        Page<Event> requestsPage = eventRepository.findAllById(userId, pageable);
-//
-//        if (!requestsPage.getContent().isEmpty()) {
-//            List<EventShortDto> content = requestsPage.getContent().stream()
-//                    .map(event -> EventMapper.mapToEventShortDtoFromEvent(event))
-//                    .sorted(Comparator.comparing(EventShortDto::getEventDate))
-//                    .collect(Collectors.toList());
-//
-//            return new PageImpl<>(
-//                    content,
-//                    requestsPage.getPageable(),
-//                    requestsPage.getTotalElements()
-//            );
-//        } else {
-//            return new PageImpl<>(
-//                    Collections.emptyList(),
-//                    requestsPage.getPageable(),
-//                    requestsPage.getTotalElements()
-//            );
-//        }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public EventFullDto getEvent(Long userId, Long eventId) {
+    public EventFullDto getEvent(Long userId, Long eventId, HttpServletRequest request) {
         Optional<User> findUser = findUserMethod(userId);
 
         Optional<Event> findEvent = eventRepository.findByIdAndInitiator_Id(eventId, userId);
 
         if (findEvent.isPresent()) {
-            return EventMapper.mapToFullEventDtoFormEvent(findEvent.get());
+            HitDto hitDto = new HitDto();
+            hitDto.setApp("main-service");
+            hitDto.setIp(request.getRemoteAddr());
+            hitDto.setUri(request.getRequestURI());
+            hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+            statsClient.postHit(hitDto);
+
+            EventFullDto event = EventMapper.mapToFullEventDtoFormEvent(findEvent.get());
+            event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
+            event.setViews(findViewsForEvents("/users/" + userId + "/events/", List.of(findEvent.get())).get(eventId));
+            return event;
         } else {
             throw new NotFoundUserException("Событие которое Вы ищите нет.");
         }
@@ -154,7 +151,6 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundUserException("Событие с id = " + eventId + " не принадлежит пользователю с id = " + userId);
         }
 
-        // 3. Найти все запросы на участие в этом событии
         List<ParticipationRequest> requests = requestRepository.findByEvent_Id(eventId);
 
         if (requests.isEmpty()) {
@@ -243,13 +239,6 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<EventFullDto> getEvents_2(List<Long> userIds, List<String> states, List<Long> categoryIds,
                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size, HttpServletRequest request) {
-        HitDto hitDto = new HitDto();
-        hitDto.setApp("main-service");
-        hitDto.setIp(request.getRemoteAddr());
-        hitDto.setUri(request.getRequestURI());
-        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
-        statsClient.postHit(hitDto);
-
         List<Long> users = eventRepository.findAll().stream().map(event -> event.getInitiator().getId()).toList();
         if (userIds != null) {
             users = userIds;
@@ -288,7 +277,16 @@ public class EventServiceImpl implements EventService {
         }
 
         List<Event> events = new ArrayList<>(eventRepository.findByParam(users, start, end, categories, listStates, from, size));
-        Map<Long, Long> views = new HashMap<>(findViewsForEvents(events));
+        List<Long> eventsIds = new ArrayList<>(events.stream().map(event -> event.getId()).toList());
+        for (Long id : eventsIds) {
+            HitDto hitDto = new HitDto();
+            hitDto.setApp("main-service");
+            hitDto.setIp(request.getRemoteAddr());
+            hitDto.setUri(request.getRequestURI() + "/" + id);
+            hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+            statsClient.postHit(hitDto);
+        }
+        Map<Long, Long> views = new HashMap<>(findViewsForEvents("/admin/events/", events));
         return events.stream()
                 .map(event -> EventMapper.mapToFullEventDtoFormEvent(event))
                 .peek(event -> {
@@ -348,13 +346,6 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEvents_1(String text, List<Long> categoryIds, Boolean paid, LocalDateTime rangeStart,
                                            LocalDateTime rangeEnd, boolean onlyAvailable, String sort, int from, int size,
                                            HttpServletRequest request) {
-        HitDto hitDto = new HitDto();
-        hitDto.setApp("main-service");
-        hitDto.setIp(request.getRemoteAddr());
-        hitDto.setUri(request.getRequestURI());
-        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
-        statsClient.postHit(hitDto);
-
         if (sort.equals(RuleSort.EVENT_DATE.toString())) {
             if (rangeStart != null && rangeEnd != null) {
                 if (rangeEnd.isBefore(rangeStart)) {
@@ -366,7 +357,16 @@ public class EventServiceImpl implements EventService {
                 if (result.isEmpty()) {
                     return Collections.emptyList();
                 } else {
-                    Map<Long, Long> views = new HashMap<>(findViewsForEvents(result));
+                    List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
+                    for (Long id : eventsIds) {
+                        HitDto hitDto = new HitDto();
+                        hitDto.setApp("main-service");
+                        hitDto.setIp(request.getRemoteAddr());
+                        hitDto.setUri(request.getRequestURI() + "/" + id);
+                        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+                        statsClient.postHit(hitDto);
+                    }
+                    Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events/", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
                                 event.setViews(views.get(event.getId()));
@@ -387,7 +387,16 @@ public class EventServiceImpl implements EventService {
                 if (result.isEmpty()) {
                     return Collections.emptyList();
                 } else {
-                    Map<Long, Long> views = new HashMap<>(findViewsForEvents(result));
+                    List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
+                    for (Long id : eventsIds) {
+                        HitDto hitDto = new HitDto();
+                        hitDto.setApp("main-service");
+                        hitDto.setIp(request.getRemoteAddr());
+                        hitDto.setUri(request.getRequestURI() + "/" + id);
+                        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+                        statsClient.postHit(hitDto);
+                    }
+                    Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events/", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
                                 event.setViews(views.get(event.getId()));
@@ -413,7 +422,16 @@ public class EventServiceImpl implements EventService {
                 if (result.isEmpty()) {
                     return Collections.emptyList();
                 } else {
-                    Map<Long, Long> views = new HashMap<>(findViewsForEvents(result));
+                    List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
+                    for (Long id : eventsIds) {
+                        HitDto hitDto = new HitDto();
+                        hitDto.setApp("main-service");
+                        hitDto.setIp(request.getRemoteAddr());
+                        hitDto.setUri(request.getRequestURI() + "/" + id);
+                        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+                        statsClient.postHit(hitDto);
+                    }
+                    Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events/", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
                                 event.setViews(views.get(event.getId()));
@@ -439,7 +457,16 @@ public class EventServiceImpl implements EventService {
                 if (result.isEmpty()) {
                     return Collections.emptyList();
                 } else {
-                    Map<Long, Long> views = new HashMap<>(findViewsForEvents(result));
+                    List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
+                    for (Long id : eventsIds) {
+                        HitDto hitDto = new HitDto();
+                        hitDto.setApp("main-service");
+                        hitDto.setIp(request.getRemoteAddr());
+                        hitDto.setUri(request.getRequestURI() + "/" + id);
+                        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+                        statsClient.postHit(hitDto);
+                    }
+                    Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events/", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
                                 event.setViews(views.get(event.getId()));
@@ -460,12 +487,20 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public EventFullDto getEvent_1(Long eventId) {
+    public EventFullDto getEvent_1(Long eventId, HttpServletRequest request) {
         Optional<Event> findEvent = findEventMethod(eventId);
 
         if (findEvent.get().getState().equals(State.PUBLISHED)) {
+            HitDto hitDto = new HitDto();
+            hitDto.setApp("main-service");
+            hitDto.setIp(request.getRemoteAddr());
+            hitDto.setUri(request.getRequestURI());
+            hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+            statsClient.postHit(hitDto);
+
             EventFullDto event = EventMapper.mapToFullEventDtoFormEvent(findEvent.get());
-            event.setViews(findViewsForEvents(List.of(findEvent.get())).get(eventId));
+            event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
+            event.setViews(findViewsForEvents("/events/", List.of(findEvent.get())).get(eventId));
             return event;
 
         } else {
@@ -487,129 +522,6 @@ public class EventServiceImpl implements EventService {
                     .toList();
         }
     }
-
-//    @Override
-//    public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
-//        Optional<User> findUser = findUserMethod(userId);
-//
-//        Optional<Event> findEvent = findEventMethod(eventId);
-//
-//        List<ParticipationRequest> findRequests = requestRepository.findByEvent_IdAndRequester_Id(eventId, userId);
-//
-//        if (!findRequests.isEmpty() || findEvent.get().getInitiator().equals(findUser.get())
-//                || findEvent.get().getState().equals(State.PENDING) || findEvent.get().getState().equals(State.CANCELED)) {
-//            throw new ConflictException("Integrity constraint has been violated.");
-//        }
-//
-//        if (findEvent.get().getConfirmedRequests() != null) {
-//            if (findEvent.get().getConfirmedRequests().intValue() == findEvent.get().getParticipantLimit()) {
-//                throw new ConflictException("Integrity constraint has been violated.");
-//            }
-//        }
-//
-//        if (!findEvent.get().isRequestModeration()) {
-//            if (findEvent.get().getConfirmedRequests() != null) {
-//                ParticipationRequest request = new ParticipationRequest();
-//                request.setEvent(findEvent.get());
-//                request.setRequester(findUser.get());
-//                request.setStatus(RequestStatus.CONFIRMED);
-//                request.setCreated(LocalDateTime.now());
-//                findEvent.get().setConfirmedRequests(findEvent.get().getConfirmedRequests() + 1);//
-//                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-//                eventRepository.save(findEvent.get());
-//
-//                return dto;
-//            } else {
-//                ParticipationRequest request = new ParticipationRequest();
-//                request.setEvent(findEvent.get());
-//                request.setRequester(findUser.get());
-//                request.setStatus(RequestStatus.CONFIRMED);
-//                request.setCreated(LocalDateTime.now());
-//                findEvent.get().setConfirmedRequests(1L);
-//                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-//                eventRepository.save(findEvent.get());
-//
-//                return dto;
-//            }
-//        } else if (findEvent.get().isRequestModeration() || findEvent.get().getParticipantLimit() == 0 /*|| findEvent.get().getConfirmedRequests() < findEvent.get().getParticipantLimit()*/) {
-//            if (findEvent.get().getConfirmedRequests() != null) {
-//                ParticipationRequest request = new ParticipationRequest();
-//                request.setEvent(findEvent.get());
-//                request.setRequester(findUser.get());
-//                request.setStatus(RequestStatus.CONFIRMED);
-//                request.setCreated(LocalDateTime.now());
-//                findEvent.get().setConfirmedRequests(findEvent.get().getConfirmedRequests() + 1);
-//                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-//                eventRepository.save(findEvent.get());
-//
-//                return dto;
-//            } else {
-//                ParticipationRequest request = new ParticipationRequest();
-//                request.setEvent(findEvent.get());
-//                request.setRequester(findUser.get());
-//                request.setStatus(RequestStatus.CONFIRMED);
-//                request.setCreated(LocalDateTime.now());
-//                findEvent.get().setConfirmedRequests(1L);
-//                ParticipationRequestDto dto = RequestMapper.mapToRequestDtoFromRequest(requestRepository.save(request));
-//                eventRepository.save(findEvent.get());
-//
-//                return dto;
-//            }
-//        } else {
-//            throw new ConflictException("Integrity constraint has been violated.");
-//        }
-//    }
-
-//    @Override
-//    @Transactional
-//    public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
-//        // 1. Проверяем существование пользователя и события
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new NotFoundUserException("User with id=" + userId + " was not found"));
-//
-//        Event event = eventRepository.findById(eventId)
-//                .orElseThrow(() -> new NotFoundUserException("Event with id=" + eventId + " was not found"));
-//
-//        // 2. Проверяем условия для конфликта
-//        if (requestRepository.existsByEventIdAndRequesterId(eventId, userId)) {
-//            throw new ConflictException("Cannot add duplicate participation request");
-//        }
-
-//        if (event.getInitiator().getId().equals(userId)) {
-//            throw new ConflictException("Initiator cannot participate in their own event");
-//        }
-//
-//        if (!event.getState().equals(State.PUBLISHED)) {
-//            throw new ConflictException("Cannot participate in unpublished event");
-//        }
-//
-//        if (event.getParticipantLimit() > 0 &&
-//                event.getConfirmedRequests() >= event.getParticipantLimit()) {
-//            throw new ConflictException("Event participant limit reached");
-//        }
-//
-//        // 3. Создаем запрос
-//        ParticipationRequest request = new ParticipationRequest();
-//        request.setEvent(event);
-//        request.setRequester(user);
-//        request.setCreated(LocalDateTime.now());
-//
-//        // 4. Определяем статус запроса
-//        if (!event.isRequestModeration() || event.getParticipantLimit() == 0) {
-//            // Автоматическое подтверждение
-//            request.setStatus(RequestStatus.CONFIRMED);
-//            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-//            eventRepository.save(event); // сохраняем обновленный счетчик
-//        } else {
-//            // Ожидание модерации
-//            request.setStatus(RequestStatus.PENDING);
-//        }
-//
-//        // 5. Сохраняем запрос
-//        ParticipationRequest savedRequest = requestRepository.save(request);
-//
-//        return RequestMapper.mapToRequestDtoFromRequest(savedRequest);
-//    }
 
     @Override
     @Transactional
@@ -681,22 +593,22 @@ public class EventServiceImpl implements EventService {
         return findEvent;
     }
 
-    private Map<Long, Long> findViewsForEvents(List<Event> events) {
+    private Map<Long, Long> findViewsForEvents(String myUri, List<Event> events) {
         if (events.isEmpty()) {
             return Collections.emptyMap();
         }
 
         try {
-            String uriTemplate = "/events/";
+            Thread.sleep(500);
             LocalDateTime start = events.stream()
                     .map(Event::getCreatedOn)
                     .min(LocalDateTime::compareTo)
                     .orElse(LocalDateTime.now().minusYears(1));
 
-            LocalDateTime end = LocalDateTime.now();
+            LocalDateTime end = LocalDateTime.now().plusDays(1);
 
             List<String> uris = events.stream()
-                    .map(event -> uriTemplate + event.getId())
+                    .map(event -> myUri + event.getId())
                     .collect(Collectors.toList());
 
             ResponseEntity<Object> response = statsClient.getStats(start.format(FORMATTER), end.format(FORMATTER), uris, true);
@@ -712,8 +624,8 @@ public class EventServiceImpl implements EventService {
                 for (ViewStatsDto stat : stats) {
                     try {
                         String uri = stat.getUri();
-                        if (uri.startsWith(uriTemplate)) {
-                            Long id = Long.parseLong(uri.substring(uriTemplate.length()));
+                        if (uri.startsWith(myUri)) {
+                            Long id = Long.parseLong(uri.substring(myUri.length()));
                             result.put(id, stat.getHits());
                         }
                     } catch (NumberFormatException e) {
@@ -726,6 +638,7 @@ public class EventServiceImpl implements EventService {
                 }
 
                 return result;
+
             } else {
                 throw new InternalError("Failed to get stats: " + response.getStatusCode());
             }
@@ -743,7 +656,6 @@ public class EventServiceImpl implements EventService {
                     .map(item -> objectMapper.convertValue(item, ViewStatsDto.class))
                     .collect(Collectors.toList());
         } else if (responseObject instanceof byte[]) {
-            // Если приходят raw bytes, пытаемся распарсить как JSON
             try {
                 String json = new String((byte[]) responseObject, StandardCharsets.UTF_8);
                 return objectMapper.readValue(json,

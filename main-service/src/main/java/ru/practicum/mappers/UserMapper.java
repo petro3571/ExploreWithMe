@@ -6,15 +6,6 @@ import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.entity.User;
 
 public class UserMapper {
-
-    public static User mapToUser(UserDto dto) {
-        User user = new User();
-        user.setId(dto.getId());
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        return user;
-    }
-
     public static User mapToUserFromNewRequest(NewUserRequest newUserRequest) {
         User user = new User();
         user.setName(newUserRequest.getName());
@@ -28,13 +19,6 @@ public class UserMapper {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         return dto;
-    }
-
-    public static User mapToUserFromShortDto(UserShortDto dto) {
-        User user = new User();
-        user.setId(dto.getId());
-        user.setName(dto.getName());
-        return user;
     }
 
     public static UserShortDto mapToShortDtoFromUser(User user) {

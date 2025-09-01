@@ -29,8 +29,7 @@ public class AdminEventsController {
                                           @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
                                           @RequestParam(defaultValue = "0") int from,
                                           @RequestParam(defaultValue = "10") int size, HttpServletRequest request) {
-        List<EventFullDto> result = service.getEvents_2(users, states, categories, rangeStart, rangeEnd, from, size, request);
-        return result;
+        return service.getEvents_2(users, states, categories, rangeStart, rangeEnd, from, size, request);
     }
 
     @PatchMapping("/{eventId}")

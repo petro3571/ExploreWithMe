@@ -27,14 +27,11 @@ public class NewEventRequest {
 
     private LocationDto location;
 
-//    @JsonProperty(defaultValue = "false")
     private boolean paid = false;
 
     @PositiveOrZero
-//    @JsonProperty(defaultValue = "0")
     private Integer participantLimit = 0;
 
-//    @JsonProperty(defaultValue = "true")
     private boolean requestModeration = true;
 
     @NotBlank

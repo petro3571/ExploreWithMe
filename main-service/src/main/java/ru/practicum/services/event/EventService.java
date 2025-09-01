@@ -12,9 +12,9 @@ import java.util.List;
 public interface EventService {
     EventFullDto addEvent(NewEventRequest request, Long userId);
 
-    List<EventShortDto> getEvents(Long userId, int from, int size);
+    List<EventShortDto> getEvents(Long userId, int from, int size, HttpServletRequest request);
 
-    EventFullDto getEvent(Long userId, Long eventId);
+    EventFullDto getEvent(Long userId, Long eventId, HttpServletRequest request);
 
     EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest request);
 
@@ -43,7 +43,7 @@ public interface EventService {
                                     int size, HttpServletRequest request
     );
 
-    EventFullDto getEvent_1(Long eventId);
+    EventFullDto getEvent_1(Long eventId, HttpServletRequest request);
 
     List<ParticipationRequestDto> getUserRequests(Long userId);
 

@@ -56,7 +56,7 @@ public class Event {
     private Integer participantLimit;
 
     @Column(name = "published_on")
-    private LocalDateTime /*String*/publishedOn;
+    private LocalDateTime publishedOn;
 
     @Column(name = "request_moderation")
     private boolean requestModeration;

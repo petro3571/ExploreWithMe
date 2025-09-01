@@ -1,6 +1,5 @@
 package ru.practicum.repo;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,13 +19,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                             @Param("from") int from,
                             @Param("size") int size);
 
-    List<Event> findAllById(Long userId, Pageable pageable);
-
     Optional<Event> findByCategory_Id(Long catId);
 
     Optional<Event> findByIdAndInitiator_Id(Long eventId, Long userId);
-
-    List<Event> findByIdIn(List<Long> eventsId);
 
     @Query(value = "SELECT e.* FROM events e " +
             "WHERE (:userIds IS NULL OR e.initiator_id IN :userIds) " +
