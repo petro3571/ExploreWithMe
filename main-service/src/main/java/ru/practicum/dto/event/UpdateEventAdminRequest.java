@@ -25,7 +25,7 @@ public class UpdateEventAdminRequest {
 
     private Location location;
 
-    private boolean paid = false;
+    private Boolean paid;
 
     private Integer participantLimit;
 

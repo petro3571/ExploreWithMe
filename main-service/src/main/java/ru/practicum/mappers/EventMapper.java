@@ -40,7 +40,6 @@ public class EventMapper {
         dto.setPaid(event.isPaid());
         dto.setParticipantLimit(event.getParticipantLimit());
         dto.setTitle(event.getTitle());
-//        dto.setViews(event.getViews());
         dto.setCreatedOn(event.getCreatedOn());
         dto.setDescription(event.getDescription());
         dto.setPublishedOn(event.getPublishedOn());
@@ -54,7 +53,6 @@ public class EventMapper {
         Event event = new Event();
         event.setAnnotation(newEventRequest.getAnnotation());
         event.setDescription(newEventRequest.getDescription());
-//        event.setCategory(CategoryMapper.mapToCategory(newEventRequest.getCategory()));
         event.setEventDate(newEventRequest.getEventDate());
         event.setPaid(newEventRequest.isPaid());
         event.setParticipantLimit(newEventRequest.getParticipantLimit());
@@ -167,11 +165,12 @@ public class EventMapper {
             event.setEventDate(request.getEventDate());
         }
 
-//        if (event.isPaid() == false && request.isPaid() == true) {
-//            event.setPaid(request.isPaid());
-//        }
-        if (request.isPaid()) {
-            event.setPaid(true);
+        if (request.getPaid() != null) {
+            if (request.getPaid()) {
+                event.setPaid(true);
+            } else {
+                event.setPaid(false);
+            }
         }
 
         if (!(request.getParticipantLimit() == null)) {
