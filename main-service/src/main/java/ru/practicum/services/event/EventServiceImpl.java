@@ -28,7 +28,6 @@ import ru.practicum.mappers.LocationMapper;
 import ru.practicum.mappers.RequestMapper;
 import ru.practicum.repo.*;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -278,20 +277,21 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = new ArrayList<>(eventRepository.findByParam(users, start, end, categories, listStates, from, size));
         List<Long> eventsIds = new ArrayList<>(events.stream().map(event -> event.getId()).toList());
-        for (Long id : eventsIds) {
+        eventsIds.stream().peek(id -> {
             HitDto hitDto = new HitDto();
             hitDto.setApp("main-service");
             hitDto.setIp(request.getRemoteAddr());
             hitDto.setUri(request.getRequestURI() + "/" + id);
             hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
             statsClient.postHit(hitDto);
-        }
+        }).toList();
         Map<Long, Long> views = new HashMap<>(findViewsForEvents("/admin/events/", events));
         return events.stream()
                 .map(event -> EventMapper.mapToFullEventDtoFormEvent(event))
                 .peek(event -> {
                     event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
                     event.setViews(views.get(event.getId()));
+
                 }).toList();
     }
 
@@ -358,14 +358,14 @@ public class EventServiceImpl implements EventService {
                     return Collections.emptyList();
                 } else {
                     List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
-                    for (Long id : eventsIds) {
+                    eventsIds.stream().peek(id -> {
                         HitDto hitDto = new HitDto();
                         hitDto.setApp("main-service");
                         hitDto.setIp(request.getRemoteAddr());
                         hitDto.setUri(request.getRequestURI() + "/" + id);
                         hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
                         statsClient.postHit(hitDto);
-                    }
+                    }).toList();
                     Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events/", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
@@ -388,14 +388,14 @@ public class EventServiceImpl implements EventService {
                     return Collections.emptyList();
                 } else {
                     List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
-                    for (Long id : eventsIds) {
+                    eventsIds.stream().peek(id -> {
                         HitDto hitDto = new HitDto();
                         hitDto.setApp("main-service");
                         hitDto.setIp(request.getRemoteAddr());
                         hitDto.setUri(request.getRequestURI() + "/" + id);
                         hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
                         statsClient.postHit(hitDto);
-                    }
+                    }).toList();
                     Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events/", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
@@ -423,14 +423,14 @@ public class EventServiceImpl implements EventService {
                     return Collections.emptyList();
                 } else {
                     List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
-                    for (Long id : eventsIds) {
+                    eventsIds.stream().peek(id -> {
                         HitDto hitDto = new HitDto();
                         hitDto.setApp("main-service");
                         hitDto.setIp(request.getRemoteAddr());
                         hitDto.setUri(request.getRequestURI() + "/" + id);
                         hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
                         statsClient.postHit(hitDto);
-                    }
+                    }).toList();
                     Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events/", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
@@ -458,14 +458,14 @@ public class EventServiceImpl implements EventService {
                     return Collections.emptyList();
                 } else {
                     List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
-                    for (Long id : eventsIds) {
+                    eventsIds.stream().peek(id -> {
                         HitDto hitDto = new HitDto();
                         hitDto.setApp("main-service");
                         hitDto.setIp(request.getRemoteAddr());
                         hitDto.setUri(request.getRequestURI() + "/" + id);
                         hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
                         statsClient.postHit(hitDto);
-                    }
+                    }).toList();
                     Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events/", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
@@ -599,7 +599,7 @@ public class EventServiceImpl implements EventService {
         }
 
         try {
-            Thread.sleep(500);
+//            Thread.sleep(100);
             LocalDateTime start = events.stream()
                     .map(Event::getCreatedOn)
                     .min(LocalDateTime::compareTo)
@@ -645,26 +645,6 @@ public class EventServiceImpl implements EventService {
 
         } catch (Exception e) {
             return createDefaultResult(events);
-        }
-    }
-
-    private List<ViewStatsDto> convertResponseToViewStats(Object responseObject) {
-        if (responseObject instanceof List) {
-            List<?> responseList = (List<?>) responseObject;
-            return responseList.stream()
-                    .filter(item -> item instanceof Map)
-                    .map(item -> objectMapper.convertValue(item, ViewStatsDto.class))
-                    .collect(Collectors.toList());
-        } else if (responseObject instanceof byte[]) {
-            try {
-                String json = new String((byte[]) responseObject, StandardCharsets.UTF_8);
-                return objectMapper.readValue(json,
-                        objectMapper.getTypeFactory().constructCollectionType(List.class, ViewStatsDto.class));
-            } catch (Exception e) {
-                throw new InternalError("Failed to parse stats response: " + e.getMessage());
-            }
-        } else {
-            throw new InternalError("Unknown response type: " + responseObject.getClass());
         }
     }
 
