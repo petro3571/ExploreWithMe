@@ -346,12 +346,16 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEvents_1(String text, List<Long> categoryIds, Boolean paid, LocalDateTime rangeStart,
                                            LocalDateTime rangeEnd, boolean onlyAvailable, String sort, int from, int size,
                                            HttpServletRequest request) {
+        List<Long> categories = categoryRepository.findAll().stream().map(category -> category.getId()).toList();
+        if (categoryIds != null) {
+            categories = categoryIds;
+        }
         if (sort.equals(RuleSort.EVENT_DATE.toString())) {
             if (rangeStart != null && rangeEnd != null) {
                 if (rangeEnd.isBefore(rangeStart)) {
                     throw new BadRequestException("Bad request of dates");
                 }
-                List<Event> result = new ArrayList<>(eventRepository.findByParamWhenDatePresAndSortEventDate(text, categoryIds, paid,
+                List<Event> result = new ArrayList<>(eventRepository.findByParamWhenDatePresAndSortEventDate(text, categories, paid,
                         rangeStart, rangeEnd, from, size));
 
                 if (result.isEmpty()) {
@@ -381,22 +385,29 @@ public class EventServiceImpl implements EventService {
                     return newResult;
                 }
             } else {
-                List<Event> result = new ArrayList<>(eventRepository.findByAfterNowEventDateSort(text, categoryIds, paid,
+                List<Event> result = new ArrayList<>(eventRepository.findByAfterNowEventDateSort(text, categories, paid,
                         LocalDateTime.now(), from, size));
 
                 if (result.isEmpty()) {
                     return Collections.emptyList();
                 } else {
-                    List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
-                    eventsIds.stream().peek(id -> {
-                        HitDto hitDto = new HitDto();
-                        hitDto.setApp("main-service");
-                        hitDto.setIp(request.getRemoteAddr());
-                        hitDto.setUri(request.getRequestURI() + "/" + id);
-                        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
-                        statsClient.postHit(hitDto);
-                    }).toList();
-                    Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events/", result));
+//                    List<Long> eventsIds = new ArrayList<>(result.stream().map(event -> event.getId()).toList());
+//                    eventsIds.stream().peek(id -> {
+//                        HitDto hitDto = new HitDto();
+//                        hitDto.setApp("main-service");
+//                        hitDto.setIp(request.getRemoteAddr());
+//                        hitDto.setUri(request.getRequestURI() + "/" + id);
+//                        hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+//                        statsClient.postHit(hitDto);
+//                    }).toList();
+                    HitDto hitDto = new HitDto();
+                    hitDto.setApp("main-service");
+                    hitDto.setIp(request.getRemoteAddr());
+                    hitDto.setUri(request.getRequestURI());
+                    hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
+                    statsClient.postHit(hitDto);
+                    //
+                    Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
                                 event.setViews(views.get(event.getId()));
@@ -416,7 +427,7 @@ public class EventServiceImpl implements EventService {
                 if (rangeEnd.isBefore(rangeStart)) {
                     throw new BadRequestException("Bad request of dates");
                 }
-                List<Event> result = new ArrayList<>(eventRepository.findByParamWhenDatePresAndSortViews(text, categoryIds, paid,
+                List<Event> result = new ArrayList<>(eventRepository.findByParamWhenDatePresAndSortViews(text, categories, paid,
                         rangeStart, rangeEnd, from, size));
 
                 if (result.isEmpty()) {
@@ -446,7 +457,7 @@ public class EventServiceImpl implements EventService {
                     return newResult;
                 }
             } else {
-                List<Event> result = new ArrayList<>(eventRepository.findByAfterNowViewsSort(text, categoryIds, paid,
+                List<Event> result = new ArrayList<>(eventRepository.findByAfterNowViewsSort(text, categories, paid,
                         LocalDateTime.now(), from, size));
 
                 if (onlyAvailable) {
@@ -629,7 +640,7 @@ public class EventServiceImpl implements EventService {
                             result.put(id, stat.getHits());
                         }
                     } catch (NumberFormatException e) {
-                        throw new Exception("sadadkslmsda");
+                        throw new Exception("NumberFormatException");
                     }
                 }
 
