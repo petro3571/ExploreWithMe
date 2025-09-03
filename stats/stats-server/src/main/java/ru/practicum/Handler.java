@@ -14,8 +14,8 @@ import java.util.Map;
 public class Handler {
     private static final Logger log = LoggerFactory.getLogger(Handler.class);
 
-    @ExceptionHandler(BadRequestException_1.class)
-    public ResponseEntity<Map<String, String>> handleBadRequest(BadRequestException_1 ex) {
+    @ExceptionHandler(BadRequestException1.class)
+    public ResponseEntity<Map<String, String>> handleBadRequest(BadRequestException1 ex) {
         Map<String, String> errorMap = new HashMap<>();
         errorMap.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMap);

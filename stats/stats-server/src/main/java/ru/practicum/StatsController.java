@@ -40,12 +40,12 @@ public class StatsController {
             LocalDateTime endDate = LocalDateTime.parse(decodedEnd, FORMATTER);
 
             if (startDate.isAfter(endDate)) {
-                throw new BadRequestException_1("неверные даты начала и конца диапазона времени");
+                throw new BadRequestException1("неверные даты начала и конца диапазона времени");
             }
             return hitService.getStats(startDate, endDate, uris, unique);
-        } catch (BadRequestException_1 e){
-            throw new BadRequestException_1("неверные даты начала и конца диапазона времени");
-        }catch (DateTimeParseException e) {
+        } catch (BadRequestException1 e) {
+            throw new BadRequestException1("неверные даты начала и конца диапазона времени");
+        } catch (DateTimeParseException e) {
             throw new Exception("Invalid date format. Use yyyy-MM-dd HH:mm:ss");
         } catch (Exception e) {
             throw new Exception("Invalid encoding");
