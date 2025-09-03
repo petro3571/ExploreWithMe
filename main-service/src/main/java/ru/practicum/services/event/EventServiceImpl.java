@@ -291,7 +291,6 @@ public class EventServiceImpl implements EventService {
                 .peek(event -> {
                     event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
                     event.setViews(views.get(event.getId()));
-
                 }).toList();
     }
 
