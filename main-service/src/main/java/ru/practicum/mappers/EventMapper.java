@@ -137,6 +137,9 @@ public class EventMapper {
             }
         }
 
+        event.setConfirmedRequests(0L);
+        event.setViews(0L);
+
         if (!(request.getParticipantLimit() == null)) {
             event.setParticipantLimit(request.getParticipantLimit());
         }
