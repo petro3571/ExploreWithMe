@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.HitDto;
 import ru.practicum.StatsClient;
 import ru.practicum.ViewStatsDto;
+import ru.practicum.dto.comments.CommentDto;
 import ru.practicum.dto.enums.RequestStatus;
 import ru.practicum.dto.enums.RuleSort;
 import ru.practicum.dto.enums.State;
@@ -23,6 +24,7 @@ import ru.practicum.exceptions.BadRequestException;
 import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.NotFoundUserException;
 import ru.practicum.exceptions.RequestConditionsException;
+import ru.practicum.mappers.CommentMapper;
 import ru.practicum.mappers.EventMapper;
 import ru.practicum.mappers.LocationMapper;
 import ru.practicum.mappers.RequestMapper;
@@ -46,6 +48,7 @@ public class EventServiceImpl implements EventService {
     private final LocationRepository locationRepository;
     private final StatsClient statsClient;
     private final ObjectMapper objectMapper;
+    private final CommentRepository commentRepository;
 
     @Override
     public EventFullDto addEvent(NewEventRequest request, Long userId) {
@@ -112,6 +115,9 @@ public class EventServiceImpl implements EventService {
             EventFullDto event = EventMapper.mapToFullEventDtoFormEvent(findEvent.get());
             event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
             event.setViews(findViewsForEvents("/users/" + userId + "/events/", List.of(findEvent.get())).get(eventId));
+            List<CommentDto> comments = commentRepository.findByEventId(eventId).stream()
+                    .map(comment -> CommentMapper.mapToCommentDto(comment)).toList();
+            event.setComments(comments);
             return event;
         } else {
             throw new NotFoundUserException("Событие которое Вы ищите нет.");
@@ -501,6 +507,9 @@ public class EventServiceImpl implements EventService {
             EventFullDto event = EventMapper.mapToFullEventDtoFormEvent(findEvent.get());
             event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
             event.setViews(findViewsForEvents("/events/", List.of(findEvent.get())).get(eventId));
+            List<CommentDto> comments = commentRepository.findByEventId(eventId).stream()
+                    .map(comment -> CommentMapper.mapToCommentDto(comment)).toList();
+            event.setComments(comments);
             return event;
 
         } else {
