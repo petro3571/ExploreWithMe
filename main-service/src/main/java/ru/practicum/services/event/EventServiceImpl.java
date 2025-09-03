@@ -405,7 +405,6 @@ public class EventServiceImpl implements EventService {
                     hitDto.setUri(request.getRequestURI());
                     hitDto.setTimestamp(LocalDateTime.parse(LocalDateTime.now().format(FORMATTER), FORMATTER));
                     statsClient.postHit(hitDto);
-                    //
                     Map<Long, Long> views = new HashMap<>(findViewsForEvents("/events", result));
                     List<EventShortDto> newResult = new ArrayList<>(result.stream().peek(event -> {
                                 event.setConfirmedRequests(requestRepository.countConfirmedRequestsForEvent(event.getId()));
@@ -609,7 +608,7 @@ public class EventServiceImpl implements EventService {
         }
 
         try {
-//            Thread.sleep(100);
+//            Thread.sleep(500);
             LocalDateTime start = events.stream()
                     .map(Event::getCreatedOn)
                     .min(LocalDateTime::compareTo)
