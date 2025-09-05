@@ -338,7 +338,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (event.getPublishedOn() != null &&
-                event.getEventDate().isAfter(event.getPublishedOn().plusHours(HOURS_TO_EVENT_DATE_FROM_NOW_FOR_ADMIN    ))) {
+                event.getEventDate().isAfter(event.getPublishedOn().plusHours(HOURS_TO_EVENT_DATE_FROM_NOW_FOR_ADMIN))) {
             Event savedEvent = eventRepository.save(event);
             return EventMapper.mapToFullEventDtoFormEvent(savedEvent);
         } else {
