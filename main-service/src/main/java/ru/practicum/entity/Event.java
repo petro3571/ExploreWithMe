@@ -69,9 +69,6 @@ public class Event {
     @Size(min = 3, max = 120, message = "Title must be between 3 and 120 characters")
     private String title;
 
-    @Column(name = "views")
-    private Long views;
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -3,7 +3,6 @@ package ru.practicum.controllers.pub;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.StatsClient;
 import ru.practicum.dto.compilation.CompilationDto;
 import ru.practicum.services.compilation.CompilationService;
 
@@ -14,7 +13,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublicCompilationController {
     private final CompilationService service;
-    private final StatsClient statsClient;
 
     @GetMapping
     public List<CompilationDto> getCompilations(@RequestParam(required = false) Boolean pinned,

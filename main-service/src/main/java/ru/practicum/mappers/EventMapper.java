@@ -24,8 +24,7 @@ public class EventMapper {
         dto.setRequestModeration(event.isRequestModeration());
         dto.setState(event.getState());
         dto.setConfirmedRequests(event.getConfirmedRequests());
-        dto.setViews(event.getViews());
-
+        dto.setViews(0L);
         return dto;
     }
 
@@ -40,7 +39,6 @@ public class EventMapper {
         event.setTitle(newEventRequest.getTitle());
         event.setState(newEventRequest.getState());
         event.setConfirmedRequests(newEventRequest.getConfirmedRequests());
-        event.setViews(newEventRequest.getViews());
         return event;
     }
 
@@ -60,11 +58,6 @@ public class EventMapper {
             shortDto.setConfirmedRequests(event.getConfirmedRequests());
         }
 
-        if (event.getViews() == null) {
-            shortDto.setViews(0L);
-        } else {
-            shortDto.setViews(event.getViews());
-        }
         return shortDto;
     }
 

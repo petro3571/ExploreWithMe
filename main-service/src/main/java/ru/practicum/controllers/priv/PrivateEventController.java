@@ -6,30 +6,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.StatsClient;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.dto.event.NewEventRequest;
 import ru.practicum.dto.event.UpdateEventUserRequest;
 import ru.practicum.dto.participationRequest.EventRequestStatusUpdateRequest;
-import ru.practicum.dto.participationRequest.EventRequestStatusUpdateResul;
+import ru.practicum.dto.participationRequest.EventRequestStatusUpdateResult;
 import ru.practicum.dto.participationRequest.ParticipationRequestDto;
 import ru.practicum.services.event.EventService;
 
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
 @RequestMapping(path = "/users/{userId}/events", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class PrivateEventController {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     private final EventService service;
-
-    private final StatsClient statsClient;
-
-    private static final String APP_NAME = "ewm-main-service";
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -69,9 +61,9 @@ public class PrivateEventController {
     }
 
     @PatchMapping("/{eventId}/requests")
-    public EventRequestStatusUpdateResul changeRequestStatus(@PathVariable(name = "userId") Long userId,
-                                                             @PathVariable(name = "eventId") Long eventId,
-                                                             @Valid @RequestBody EventRequestStatusUpdateRequest request) {
+    public EventRequestStatusUpdateResult changeRequestStatus(@PathVariable(name = "userId") Long userId,
+                                                              @PathVariable(name = "eventId") Long eventId,
+                                                              @Valid @RequestBody EventRequestStatusUpdateRequest request) {
         return service.changeRequestStatus(userId, eventId, request);
     }
 }

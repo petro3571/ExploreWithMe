@@ -3,7 +3,7 @@ package ru.practicum.services.event;
 import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.dto.event.*;
 import ru.practicum.dto.participationRequest.EventRequestStatusUpdateRequest;
-import ru.practicum.dto.participationRequest.EventRequestStatusUpdateResul;
+import ru.practicum.dto.participationRequest.EventRequestStatusUpdateResult;
 import ru.practicum.dto.participationRequest.ParticipationRequestDto;
 
 import java.time.LocalDateTime;
@@ -20,9 +20,9 @@ public interface EventService {
 
     List<ParticipationRequestDto> getEventParticipants(Long userId, Long eventId);
 
-    EventRequestStatusUpdateResul changeRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest request);
+    EventRequestStatusUpdateResult changeRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest request);
 
-    List<EventFullDto> getEvents_2(List<Long> userIds,
+    List<EventFullDto> getEventsByAdmin(List<Long> userIds,
                                    List<String> states,
                                    List<Long> categoryIds,
                                    LocalDateTime rangeStart,
@@ -30,9 +30,9 @@ public interface EventService {
                                    int from,
                                    int size, HttpServletRequest request);
 
-    EventFullDto updateEvent_1(Long eventId, UpdateEventAdminRequest request);
+    EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest request);
 
-    List<EventShortDto> getEvents_1(String text,
+    List<EventShortDto> getEventsByUser(String text,
                                     List<Long> categoryIds,
                                     Boolean paid,
                                     LocalDateTime rangeStart,
@@ -43,7 +43,7 @@ public interface EventService {
                                     int size, HttpServletRequest request
     );
 
-    EventFullDto getEvent_1(Long eventId, HttpServletRequest request);
+    EventFullDto getEventByUser(Long eventId, HttpServletRequest request);
 
     List<ParticipationRequestDto> getUserRequests(Long userId);
 

@@ -30,8 +30,7 @@
            participant_limit INT,
            published_on TIMESTAMP WITHOUT TIME ZONE,
            request_moderation BOOLEAN,
-           state VARCHAR(120),
-           views BIGINT
+           state VARCHAR(120)
          );
  CREATE TABLE IF NOT EXISTS compilations (
             id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
