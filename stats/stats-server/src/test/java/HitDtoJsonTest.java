@@ -32,6 +32,5 @@ public class HitDtoJsonTest {
         assertThat(result).extractingJsonPathStringValue("$.uri").isEqualTo("test/1");
         assertThat(result).extractingJsonPathStringValue("$.ip").isEqualTo("1.1.1.1");
         assertThat(result).extractingJsonPathStringValue("$.timestamp").isEqualTo("2000-01-01 01:01:01");
-
     }
 }

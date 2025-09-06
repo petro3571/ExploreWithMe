@@ -12,6 +12,7 @@ import ru.practicum.*;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static org.hamcrest.Matchers.is;
@@ -23,6 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class StatsControllerTest {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     @Mock
     private HitServiceImpl hitService;
 
@@ -66,7 +69,7 @@ class StatsControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(hitDto.getId()), Integer.class))
                 .andExpect(jsonPath("$.app", is(hitDto.getApp())))
                 .andExpect(jsonPath("$.uri", is(hitDto.getUri())))
@@ -78,7 +81,8 @@ class StatsControllerTest {
         when(hitService.getStats(any(), any(), anyList(), anyBoolean()))
                 .thenReturn(List.of(dto));
 
-        mvc.perform(get("/stats?start=" + LocalDateTime.now().minusYears(1) + "&end=" + LocalDateTime.now().plusYears(1)
+        mvc.perform(get("/stats?start=" + LocalDateTime.now().minusYears(1).format(FORMATTER)
+                        + "&end=" + LocalDateTime.now().plusYears(1).format(FORMATTER)
                         + "&uris=test/1&unique=false")
                         .characterEncoding(StandardCharsets.UTF_8)
                         .accept(MediaType.APPLICATION_JSON))

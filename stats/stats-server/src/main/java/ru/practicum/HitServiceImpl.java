@@ -30,7 +30,7 @@ public class HitServiceImpl implements HitService {
             return hitRepository.findUniqueStatsByUrisAndTimestampBetween(uris, start, end);
 
             } else {
-            return hitRepository.findByUriInAndTimestampBetween(uris, start, end);
+            return hitRepository.findByUriInAndTimestampBetween(uris,start, end);
             }
         } else {
             if (unique) {
