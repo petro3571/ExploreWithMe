@@ -39,4 +39,8 @@ public class NewEventRequest {
     private String title;
 
     private State state = State.PENDING;
+
+    private Long confirmedRequests = 0L;
+
+    private Long views = 0L;
 }

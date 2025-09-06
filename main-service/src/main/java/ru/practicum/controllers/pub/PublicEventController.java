@@ -1,27 +1,28 @@
 package ru.practicum.controllers.pub;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.services.event.EventService;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
 @RequestMapping(path = "/events", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Validated
 public class PublicEventController {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final EventService service;
 
     @GetMapping
-    public List<EventShortDto> getEvents_1(@RequestParam(required = false) String text,
+    public List<EventShortDto> getEventsByUser(@RequestParam(required = false) @Size(max = 999) String text,
                                            @RequestParam(required = false) List<Long> categories,
                                            @RequestParam(required = false) Boolean paid,
                                            @RequestParam(required = false)
@@ -33,14 +34,14 @@ public class PublicEventController {
                                           @RequestParam(defaultValue = "0") int from,
                                            @RequestParam(defaultValue = "10") int size, HttpServletRequest request
                                           ) {
-        return service.getEvents_1(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
+        return service.getEventsByUser(text, categories, paid, rangeStart, rangeEnd, onlyAvailable,
                 sort, from, size, request);
 
     }
 
     @GetMapping("/{eventId}")
-    public EventFullDto getEvent_1(@PathVariable(name = "eventId") Long eventId, HttpServletRequest request) {
-        return service.getEvent_1(eventId, request);
+    public EventFullDto getEventByUser(@PathVariable(name = "eventId") Long eventId, HttpServletRequest request) {
+        return service.getEventByUser(eventId, request);
 
     }
 }
