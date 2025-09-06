@@ -1,1 +1,1 @@
-https://github.com/petro3571/ExploreWithMe/pull/3
+[ПУЛЛРЕКВЕСТ](https://github.com/petro3571/ExploreWithMe/pull/3)
