@@ -16,14 +16,14 @@ public class AdminCommentController {
     private final CommentService commentService;
 
     @GetMapping
-    public List<CommentDto> getAllComments_1(@PathVariable Long userId) {
-        return commentService.getAllComments_1(userId);
+    public List<CommentDto> getAllCommentsByAdmin(@PathVariable Long userId) {
+        return commentService.getAllCommentsByAdmin(userId);
     }
 
     @DeleteMapping("/{commentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteComment_1(@PathVariable Long userId,
+    public void deleteCommentByAdmin(@PathVariable Long userId,
                                 @PathVariable Long commentId) {
-        commentService.deleteComment_1(userId, commentId);
+        commentService.deleteCommentByAdmin(userId, commentId);
     }
 }

@@ -25,8 +25,8 @@ public interface CommentService {
 
     List<CommentDto> getAllCommentsForEvent(Long eventId);
 
-    List<CommentDto> getAllComments_1(Long userId);
+    List<CommentDto> getAllCommentsByAdmin(Long userId);
 
-    void deleteComment_1(Long userId,
+    void deleteCommentByAdmin(Long userId,
                          Long commentId);
 }

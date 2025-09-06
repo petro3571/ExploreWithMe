@@ -92,7 +92,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CommentDto> getAllComments_1(Long userId) {
+    public List<CommentDto> getAllCommentsByAdmin(Long userId) {
         if (userRepository.findById(userId).isEmpty()) {
             throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
         }
@@ -101,7 +101,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public void deleteComment_1(Long userId, Long commentId) {
+    public void deleteCommentByAdmin(Long userId, Long commentId) {
         Comment comment = findCommentMethod(commentId).get();
         if (!userId.equals(comment.getUser().getId())) {
             throw new NotFoundUserException("Комментария с id = " + commentId + " и автором с id = " + userId + " нет.");
