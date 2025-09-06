@@ -1,6 +1,5 @@
 package ru.practicum.services.comment;
 
-import org.springframework.web.bind.annotation.PathVariable;
 import ru.practicum.dto.comments.CommentDto;
 import ru.practicum.dto.comments.NewCommentDto;
 
