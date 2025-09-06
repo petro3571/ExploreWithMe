@@ -45,10 +45,10 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public CommentDto patchComment(Long userId, Long eventId, Long commentId, NewCommentDto updateCommentDto) {
         Comment oldComment = findCommentMethod(commentId).get();
-        if (userId != oldComment.getUser().getId()) {
-            throw new BadRequestException("Только автор комментария может обновлять комментарий.");
+        if (!userId.equals(oldComment.getUser().getId())) {
+            throw new BadRequestException("Только автор комментария может просматривать комментарий.");
         }
-        if (eventId != oldComment.getEvent().getId()) {
+        if (!eventId.equals(oldComment.getEvent().getId())) {
             throw new NotFoundUserException("Комментария с id = " + commentId + " для события с id = " + eventId + " нет.");
         }
         oldComment.setText(updateCommentDto.getText());
@@ -59,10 +59,10 @@ public class CommentServiceImpl implements CommentService {
     @Transactional(readOnly = true)
     public CommentDto getComment(Long userId, Long eventId, Long commentId) {
         Comment comment = findCommentMethod(commentId).get();
-        if (userId != comment.getUser().getId()) {
+        if (!userId.equals(comment.getUser().getId())) {
             throw new BadRequestException("Только автор комментария может обновлять комментарий.");
         }
-        if (eventId != comment.getEvent().getId()) {
+        if (!eventId.equals(comment.getEvent().getId())) {
             throw new NotFoundUserException("Комментария с id = " + commentId + " для события с id = " + eventId + " нет.");
         }
         return CommentMapper.mapToCommentDto(comment);
@@ -71,11 +71,11 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void deleteComment(Long userId, Long eventId, Long commentId) {
         Comment comment = findCommentMethod(commentId).get();
-        if (userId != comment.getUser().getId()) {
-            throw new BadRequestException("Only author can delete comment.");
+        if (!userId.equals(comment.getUser().getId())) {
+            throw new BadRequestException("Только автор комментария может удалить комментарий.");
         }
-        if (eventId != comment.getEvent().getId()) {
-            throw new NotFoundUserException("No comment with id = " + commentId + " for event with id = " + eventId);
+        if (!eventId.equals(comment.getEvent().getId())) {
+            throw new NotFoundUserException("Комментария с id = " + commentId + " для события с id = " + eventId + " нет.");
         }
         commentRepository.deleteById(commentId);
     }
@@ -83,7 +83,9 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional(readOnly = true)
     public List<CommentDto> getAllCommentsForEvent(Long eventId) {
-        Event event = findEventMethod(eventId).get();
+        if (eventRepository.findById(eventId).isEmpty()) {
+            throw new NotFoundUserException("Событие с id " + eventId + " нет.");
+        }
         List<Comment> comments = commentRepository.findByEventId(eventId);
         return comments.stream().map(comment -> CommentMapper.mapToCommentDto(comment)).toList();
     }
@@ -91,7 +93,9 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional(readOnly = true)
     public List<CommentDto> getAllComments_1(Long userId) {
-        User user = findUserMethod(userId).get();
+        if (userRepository.findById(userId).isEmpty()) {
+            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
+        }
         List<Comment> comments = commentRepository.findByUserId(userId);
         return comments.stream().map(comment -> CommentMapper.mapToCommentDto(comment)).toList();
     }
@@ -99,7 +103,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void deleteComment_1(Long userId, Long commentId) {
         Comment comment = findCommentMethod(commentId).get();
-        if (userId != comment.getUser().getId()) {
+        if (!userId.equals(comment.getUser().getId())) {
             throw new NotFoundUserException("Комментария с id = " + commentId + " и автором с id = " + userId + " нет.");
         }
         commentRepository.deleteById(commentId);
