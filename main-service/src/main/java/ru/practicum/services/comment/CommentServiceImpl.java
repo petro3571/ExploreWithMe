@@ -30,13 +30,18 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentDto postComment(Long userId, Long eventId, NewCommentDto newCommentDto) {
-        User user = findUserMethod(userId).get();
+        Optional<User> findUser = userRepository.findById(userId);
+        if (findUser.isEmpty()) {
+            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
+        }
+
         Event event = findEventMethod(eventId).get();
         if (!event.getState().equals(State.PUBLISHED)) {
             throw new NotFoundUserException("События с id = " + eventId + " нет");
         }
+
         Comment comment = CommentMapper.mapToCommentFromNewRequest(newCommentDto);
-        comment.setUser(user);
+        comment.setUser(findUser.get());
         comment.setEvent(event);
         comment.setCreated(LocalDateTime.now());
         return CommentMapper.mapToCommentDto(commentRepository.save(comment));
@@ -107,15 +112,6 @@ public class CommentServiceImpl implements CommentService {
             throw new NotFoundUserException("Комментария с id = " + commentId + " и автором с id = " + userId + " нет.");
         }
         commentRepository.deleteById(commentId);
-    }
-
-    private Optional<User> findUserMethod(Long userId) {
-        Optional<User> findUser = userRepository.findById(userId);
-        if (!findUser.isPresent()) {
-            throw new NotFoundUserException("Пользователь с id " + userId + "не зарегистрирован.");
-        } else {
-            return findUser;
-        }
     }
 
     private Optional<Event> findEventMethod(Long eventId) {
