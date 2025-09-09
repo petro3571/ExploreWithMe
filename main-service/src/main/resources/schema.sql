@@ -51,3 +51,11 @@
                requester_id INTEGER REFERENCES users ON DELETE CASCADE,
                status VARCHAR(50)
              );
+
+  CREATE TABLE IF NOT EXISTS comments (
+               id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+               text VARCHAR(254),
+               event_id INTEGER REFERENCES events ON DELETE CASCADE,
+               user_id INTEGER REFERENCES users ON DELETE CASCADE,
+               created TIMESTAMP WITHOUT TIME ZONE
+             );
